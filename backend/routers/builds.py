@@ -1,90 +1,94 @@
 import os
-import random
+import json
 import traceback
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from groq import Groq # <--- Importamos Groq
+from groq import Groq
+from dotenv import load_dotenv
 from services.supabase_client import get_supabase
 
-router = APIRouter(prefix="/builds", tags=["Builds"])
-
-# Configura tu API Key de Groq (Sácala de https://console.groq.com/)
+load_dotenv()
 GROQ_KEY = os.getenv("GROQ_API_KEY")
 client = Groq(api_key=GROQ_KEY)
+
+router = APIRouter(prefix="/builds", tags=["Builds"])
 
 class BuildQuery(BaseModel):
     playstyle: str
     is_dlc: bool
 
-async def agent_extract_build(playstyle: str):
-    # Aquí simulamos el post de Reddit. 
-    # En el futuro, aquí harás un SELECT a tu tabla de 'scraped_posts'
-    mock_posts = {
-        "sangrado": "For a god-tier bleed build in 2026, you must use Rivers of Blood. Wear the White Mask and the rest of the Rakshasa Set. Essential talismans: Lord of Blood's Exultation and Rotten Winged Sword Insignia. Ash of War: Seppuku on a Godskin Peeler.",
-        "fuerza": "Strength is king. Use the Giant-Crusher with Lion's Claw ash of war. Bull-Goat set is mandatory for poise. Claw Talisman and Great-Jar's Arsenal are a must."
-    }
-    
-    post_content = mock_posts.get(playstyle, "Build focused on " + playstyle)
-
-    # El Prompt: Le pedimos a Llama 3 que nos devuelva SOLO JSON
+async def agent_get_reddit_build(playstyle: str):
+    # Prompt agresivo para evitar mocks y forzar piezas individuales
     prompt = f"""
-    Eres un experto en Elden Ring. Analiza este post de Reddit y extrae los elementos de la build.
-    Post: "{post_content}"
+    Eres un analista de meta-juego de Elden Ring que lee Reddit y YouTube.
+    Genera una build REAL de '{playstyle}'.
     
-    Responde ESTRICTAMENTE en formato JSON con esta estructura:
+    REGLAS ESTRICTAS:
+    1. No uses nombres de sets generales (ej: No digas 'Malenia Set').
+    2. Desglosa la armadura en piezas: Helm, Chest Armor, Gauntlets, Leggings.
+    3. Usa los nombres técnicos exactos del juego en inglés.
+    
+    Responde en JSON:
     {{
-      "weapon": "nombre del arma principal",
-      "armor_main": "nombre del set o pieza principal",
-      "talismanes": ["talisman1", "talisman2"],
-      "skill": "nombre de la habilidad o ceniza"
+      "build_name": "Nombre del meta actual",
+      "weapon": ["Nombre del Arma"],
+      "armor": ["Pieza Cabeza", "Pieza Pecho", "Pieza Manos", "Pieza Piernas"],
+      "talismans": ["Talisman 1", "Talisman 2", "Talisman 3", "Talisman 4"],
+      "skills": ["Ceniza de Guerra"],
+      "spirit_ashes": ["Espíritu"]
     }}
     """
-
-    chat_completion = client.chat.completions.create(
+    completion = client.chat.completions.create(
         messages=[{"role": "user", "content": prompt}],
-        model="llama3-8b-8192", # El modelo más rápido de Groq
+        model="llama-3.3-70b-versatile",
         response_format={"type": "json_object"}
     )
-    
-    import json
-    return json.loads(chat_completion.choices[0].message.content)
+    return json.loads(completion.choices[0].message.content)
 
 @router.post("/search")
 async def search_builds(query: BuildQuery):
     try:
-        # 1. Llamamos al Agente de Groq para extraer la build del "post"
-        extracted = await agent_extract_build(query.playstyle.lower())
-        
+        reddit_build = await agent_get_reddit_build(query.playstyle.lower())
         sb = get_supabase()
-        all_items = sb.table("items").select("*").execute().data or []
-        all_skills = sb.table("skills").select("*").execute().data or []
 
-        # 2. El Mapper: Busca en tu BBDD lo que Groq ha extraído
-        def find_in_db(name_query, category):
-            if not name_query: return []
-            return [
-                i for i in all_items 
-                if name_query.lower() in (i.get("name") or "").lower() 
-                and category in (i.get("type") or "").lower()
-            ]
+        # Descargamos todo para comparar en memoria (más rápido y evita errores de query)
+        db_items = sb.table("items").select("name, image").execute().data or []
+        db_skills = sb.table("skills").select("name, image").execute().data or []
+        db_spirits = sb.table("spirit_ashes").select("name, image").execute().data or []
 
-        # 3. Construimos la respuesta final cruzando datos
-        weapon = find_in_db(extracted["weapon"], "weapon")[:1]
-        # Si dice "Rakshasa", buscamos todas las piezas de ese set
-        armor = [i for i in all_items if extracted["armor_main"].lower() in (i.get("name") or "").lower() and "armor" in (i.get("type") or "").lower()][:4]
-        talismans = []
-        for t_name in extracted["talismanes"]:
-            talismans.extend(find_in_db(t_name, "talisman"))
+        def match_item(name_from_ai, pool):
+            if not name_from_ai: return {"name": name_from_ai, "image": None}
+            
+            n_ai = name_from_ai.lower().strip()
+            
+            # 1. Intento: ¿El nombre de la IA está contenido en la DB o viceversa?
+            # Esto pilla "Seppuku" -> "Ash of War: Seppuku"
+            for item in pool:
+                n_db = item["name"].lower()
+                if n_ai in n_db or n_db in n_ai:
+                    return {"name": item["name"], "image": item["image"]}
+            
+            # 2. Intento: Si es un nombre largo (Talismanes), probamos con las palabras clave
+            # Esto pilla "Lord of Blood" -> "Lord of Blood's Exultation"
+            words = n_ai.split()
+            if len(words) > 1:
+                keywords = " ".join(words[:2]) # Probamos con las primeras 2 palabras
+                for item in pool:
+                    if keywords in item["name"].lower():
+                        return {"name": item["name"], "image": item["image"]}
 
+            return {"name": name_from_ai, "image": None}
+
+        # Procesamos con la nueva lógica de búsqueda inteligente
         return {
-            "build_name": f"Recomendación de la Comunidad ({query.playstyle})",
-            "weapon": weapon,
-            "armor": armor,
-            "talismans": talismans[:4],
-            "skills": [s for s in all_skills if extracted["skill"].lower() in (s.get("name") or "").lower()][:1],
-            "spirit_ashes": sb.table("spirit_ashes").select("*").limit(2).execute().data or []
+            "build_name": reddit_build.get("build_name", "Meta Build"),
+            "weapon": [match_item(w, db_items) for w in reddit_build.get("weapon", [])],
+            "armor": [match_item(a, db_items) for a in reddit_build.get("armor", [])],
+            "talismans": [match_item(t, db_items) for t in reddit_build.get("talismans", [])],
+            "skills": [match_item(s, db_skills) for s in reddit_build.get("skills", [])],
+            "spirit_ashes": [match_item(sp, db_spirits) for sp in reddit_build.get("spirit_ashes", [])]
         }
 
     except Exception as e:
         traceback.print_exc()
-        raise HTTPException(status_code=500, detail="El agente ha fallado analizando Reddit.")
+        raise HTTPException(status_code=500, detail=str(e))
