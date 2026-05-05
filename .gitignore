@@ -1,0 +1,26 @@
+# API Keys y Secretos (LO MÁS IMPORTANTE)
+.env
+.env.local
+.env.*.local
+*.env
+
+# Python (Backend)
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+.venv/
+.pytest_cache/
+
+# Next.js / Node (Frontend)
+node_modules/
+.next/
+out/
+build/
+dist/
+.DS_Store
+
+# Base de datos local (si usas sqlite)
+*.sqlite3
+*.db
