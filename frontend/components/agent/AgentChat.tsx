@@ -2,20 +2,39 @@
 
 import { useState, useRef, useEffect } from 'react'
 
+interface ItemMention {
+  name: string
+  image: string
+  type: string
+  dlc: boolean
+}
+
 interface Message {
   role: 'user' | 'ai'
   content: string
   timestamp: Date
+  items?: ItemMention[]
 }
 
 const PRESETS = [
-  { label: 'Sangrado DLC', prompt: 'Busco una build de Sangrado para el DLC Shadow of the Erdtree' },
-  { label: 'Mago de Fe', prompt: 'Quiero una build de hechizos de Fe con buena defensa' },
-  { label: 'Fuerza Colosal', prompt: 'Recomiéndame armas colosales para una build de Fuerza pura' },
+  { label: 'Sangrado DLC',     prompt: 'Busco una build de Sangrado para el DLC Shadow of the Erdtree' },
+  { label: 'Mago de Fe',       prompt: 'Quiero una build de hechizos de Fe con buena defensa' },
+  { label: 'Fuerza Colosal',   prompt: 'Recomiéndame armas colosales para una build de Fuerza pura' },
   { label: 'Asesino Destreza', prompt: 'Build de Destreza con sangrado y cenizas de guerra rápidas' },
-  { label: 'Invocador', prompt: 'Qué spirit ashes son las mejores para apoyar en jefes difíciles' },
-  { label: 'Arcano Puro', prompt: 'Build de Arcano con máximo sangrado y veneno para el DLC' },
+  { label: 'Invocador',        prompt: 'Qué spirit ashes son las mejores para apoyar en jefes difíciles' },
+  { label: 'Arcano Puro',      prompt: 'Build de Arcano con máximo sangrado y veneno para el DLC' },
 ]
+
+const TYPE_LABELS: Record<string, string> = {
+  weapon:      '⚔ Arma',
+  armor:       '🛡 Armadura',
+  talisman:    '◆ Talismán',
+  sorcery:     '✦ Hechizo',
+  incantation: '☀ Encantamiento',
+  skill:       '◈ Ceniza',
+  spirit:      '◎ Espíritu',
+  boss:        '☠ Jefe',
+}
 
 export default function AgentChat() {
   const [messages, setMessages] = useState<Message[]>([
@@ -52,6 +71,7 @@ export default function AgentChat() {
         role: 'ai',
         content: data.response,
         timestamp: new Date(),
+        items: data.mentioned_items || [],
       }])
     } catch {
       setMessages(prev => [...prev, {
@@ -91,10 +111,7 @@ export default function AgentChat() {
               key={p.label}
               onClick={() => sendMessage(p.prompt)}
               className="text-left px-3 py-2 rounded-sm transition-all duration-200 text-[11.5px] leading-snug"
-              style={{
-                border: '1px solid transparent',
-                color: 'var(--text-ash)',
-              }}
+              style={{ border: '1px solid transparent', color: 'var(--text-ash)' }}
               onMouseEnter={e => {
                 const el = e.currentTarget
                 el.style.background = 'var(--bg-hover)'
@@ -118,7 +135,6 @@ export default function AgentChat() {
             </button>
           ))}
         </div>
-        
 
         {/* Context injection badge */}
         <div className="mt-auto p-3">
@@ -150,7 +166,7 @@ export default function AgentChat() {
               AI Companion
             </p>
             <p className="text-[11px] mt-0.5" style={{ color: 'var(--text-ash)' }}>
-              Powered by Ollama · llama3.2 · Datos en vivo de Supabase
+              Powered by Groq · Llama 3.3 · Datos en vivo de Supabase
             </p>
           </div>
           <div
@@ -202,7 +218,44 @@ export default function AgentChat() {
                 >
                   {msg.role === 'ai' ? 'Companion' : 'Tú'}
                 </p>
+
                 {msg.content}
+
+                {/* Items mencionados con imagen */}
+                {msg.items && msg.items.length > 0 && (
+                  <div className="mt-3 pt-3 flex flex-wrap gap-2" style={{ borderTop: '1px solid rgba(201,168,76,0.15)' }}>
+                    {msg.items.map((item, j) => (
+                      <div
+                        key={j}
+                        className="flex items-center gap-2 px-2 py-1.5 rounded-sm"
+                        style={{
+                          background: item.dlc ? 'rgba(120,80,200,0.1)' : 'rgba(201,168,76,0.06)',
+                          border: `1px solid ${item.dlc ? 'rgba(160,96,224,0.3)' : 'rgba(201,168,76,0.2)'}`,
+                        }}
+                      >
+                        {item.image && (
+                          <img
+                            src={item.image}
+                            alt={item.name}
+                            className="w-7 h-7 object-contain flex-shrink-0"
+                          />
+                        )}
+                        <div>
+                          <p
+                            className="font-cinzel text-[10px] leading-tight"
+                            style={{ color: item.dlc ? '#C090FF' : 'var(--gold)' }}
+                          >
+                            {item.name}
+                          </p>
+                          <p className="text-[8px] mt-0.5" style={{ color: 'var(--text-dim)' }}>
+                            {TYPE_LABELS[item.type] || item.type}
+                            {item.dlc && <span style={{ color: '#C090FF' }}> · DLC</span>}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           ))}
