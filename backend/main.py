@@ -1,11 +1,25 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
+from contextlib import asynccontextmanager
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from routers import agent, builds, patches
 
 load_dotenv()
 
-app = FastAPI(title="The Souls Grail")
+scheduler = AsyncIOScheduler()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    scheduler.add_job(run_scraper_job, "interval", hours=6, id="reddit_scraper")
+    scheduler.start()
+    yield
+    scheduler.shutdown()
+
+async def run_scraper_job():
+    pass  # Desactivado — ahora el scraping es en tiempo real
+
+app = FastAPI(title="The Souls Grail API", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
