@@ -17,9 +17,9 @@ const NAV_ITEMS = [
     section: 'World',
     items: [
       { id: 'patches', icon: '◉', label: 'Patch Notes', count: null, live: true },
-      { id: 'bosses',    icon: '☠', label: 'Bosses',      count: null, live: false },
-      { id: 'items',     icon: '◆', label: 'Items',       count: null, live: false },
-      { id: 'spells',    icon: '✦', label: 'Spells',      count: null, live: false },
+      { id: 'bosses',  icon: '☠', label: 'Bosses',      count: null, live: true },
+      { id: 'items',   icon: '◆', label: 'Items',       count: null, live: false },
+      { id: 'spells',  icon: '✦', label: 'Spells',      count: null, live: false },
     ],
   },
   {

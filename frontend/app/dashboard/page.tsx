@@ -6,6 +6,7 @@ import Sidebar from '@/components/layout/Sidebar'
 import AgentChat from '@/components/agent/AgentChat'
 import BuildFinder from '@/components/builds/BuildFinder'
 import PatchNotes from '@/components/patches/PatchNotes'
+import Bosses from '@/components/bosses/Bosses'
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState('agent')
@@ -20,6 +21,9 @@ export default function Dashboard() {
 
       case 'patches':
         return <PatchNotes />
+
+      case 'bosses':
+        return <Bosses />
 
       default:
         return <Placeholder title={activeTab} />

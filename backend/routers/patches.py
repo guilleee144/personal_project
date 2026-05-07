@@ -1,25 +1,22 @@
 import re
-import asyncio
 import httpx
 from bs4 import BeautifulSoup
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 from datetime import datetime, timedelta
 
 router = APIRouter(prefix="/patches", tags=["patches"])
 
+FEXTRALIFE_PATCH_URL = "https://eldenring.wiki.fextralife.com/Patch+Notes"
+
 SCRAPE_HEADERS = {
-    "User-Agent": (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-        "AppleWebKit/537.36 Chrome/120.0 Safari/537.36"
-    )
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36",
+    "Accept-Language": "en-US,en;q=0.9",
 }
 
 CACHE = {
     "data": None,
     "expires_at": None,
 }
-
-FEXTRALIFE_PATCH_URL = "https://eldenring.wiki.fextralife.com/Patch+Notes"
 
 
 def clean_text(text: str) -> str:
@@ -29,46 +26,16 @@ def clean_text(text: str) -> str:
 def classify_change(text: str) -> str:
     t = text.lower()
 
-    buff_keywords = [
-        "increased", "improved", "extended", "raised", "enhanced", "boosted",
-        "buff", "more damage", "stronger", "faster", "wider", "longer range",
-    ]
-    nerf_keywords = [
-        "decreased", "reduced", "lowered", "shortened", "nerf", "less damage",
-        "weaker", "slower", "narrower",
-    ]
-    fix_keywords = [
-        "fixed", "bug", "issue", "resolved", "correction", "addressed",
-    ]
-
-    if any(w in t for w in buff_keywords):
+    if any(w in t for w in ["increased", "improved", "extended", "raised", "enhanced", "buff"]):
         return "buff"
-    if any(w in t for w in nerf_keywords):
+
+    if any(w in t for w in ["decreased", "reduced", "lowered", "shortened", "nerf"]):
         return "nerf"
-    if any(w in t for w in fix_keywords):
+
+    if any(w in t for w in ["fixed", "bug", "issue", "resolved", "correction"]):
         return "fix"
 
     return "adjustment"
-
-
-def extract_version(text: str) -> str:
-    match = re.search(r"([0-9]+\.[0-9]+(?:\.[0-9]+)?(?:\.[0-9]+)?)", text, re.I)
-    return match.group(1) if match else "Unknown"
-
-
-def infer_item(text: str) -> str:
-    text = clean_text(text)
-    patterns = [
-        r"(?:for|of|the)\s+([^,]+?)\s+(?:has|skill|attack|damage|effect)",
-        r"\"([^\"]+?)\"",
-    ]
-    for pattern in patterns:
-        match = re.search(pattern, text, re.I)
-        if match:
-            item = clean_text(match.group(1))
-            if 2 <= len(item) <= 60:
-                return item
-    return "General"
 
 
 def build_summary(changes: list[dict]) -> dict:
@@ -80,201 +47,158 @@ def build_summary(changes: list[dict]) -> dict:
     }
 
 
+def extract_version(text: str) -> str:
+    match = re.search(r"(?:Patch\s*)?(?:Version|Ver\.?)\s*([0-9]+\.[0-9]+(?:\.[0-9]+)?)", text, re.I)
+    if match:
+        return match.group(1)
+
+    match = re.search(r"\b([0-9]+\.[0-9]+(?:\.[0-9]+)?)\b", text)
+    return match.group(1) if match else "Latest"
+
+
+def infer_item(text: str) -> str:
+    patterns = [
+        r"for the following weapon types:?\s*(.+)",
+        r"for\s+(.+?)\s+has",
+        r"of\s+(.+?)\s+has",
+        r"the\s+(.+?)\s+skill",
+        r"weapon\s+(.+?)\s+",
+    ]
+
+    for pattern in patterns:
+        match = re.search(pattern, text, re.I)
+        if match:
+            item = clean_text(match.group(1))
+            if 2 <= len(item) <= 90:
+                return item
+
+    return "General"
+
+
 async def fetch_html(url: str) -> str:
-    async with httpx.AsyncClient(
-        headers=SCRAPE_HEADERS,
-        timeout=30.0,
-        follow_redirects=True,
-    ) as client:
-        response = await client.get(url)
-        response.raise_for_status()
-        return response.text
+    async with httpx.AsyncClient(headers=SCRAPE_HEADERS, timeout=25.0, follow_redirects=True) as client:
+        res = await client.get(url)
+        res.raise_for_status()
+        return res.text
 
 
-async def fetch_patch_links() -> list[dict]:
-    """Extrae todos los links de versiones de la página principal"""
+async def fetch_fextralife_patches() -> list[dict]:
     html = await fetch_html(FEXTRALIFE_PATCH_URL)
-    soup = BeautifulSoup(html, "html.parser")
-
-    links = []
-    
-    for a in soup.find_all("a", href=True):
-        href = a["href"]
-        title = clean_text(a.get_text(" ", strip=True))
-
-        # No procesa anclas
-        if href.startswith("#"):
-            continue
-
-        # Debe tener "patch" en la URL
-        if "patch" not in href.lower():
-            continue
-
-        # Construye URL completa
-        if href.startswith("/"):
-            href = "https://eldenring.wiki.fextralife.com" + href
-
-        # Evita la página principal
-        if href == FEXTRALIFE_PATCH_URL:
-            continue
-
-        links.append({"title": title, "url": href})
-
-    # Deduplicación
-    unique = []
-    seen = set()
-    for link in links:
-        if link["url"] not in seen:
-            seen.add(link["url"])
-            unique.append(link)
-
-    print(f"[PATCHES] Found {len(unique)} patch links")
-    return unique
-
-
-async def parse_patch_page(url: str, fallback_title: str) -> dict | None:
-    """Parsea una página de patch individual"""
-    try:
-        html = await fetch_html(url)
-    except Exception as e:
-        print(f"[PATCHES] Failed to fetch {url}: {e}")
-        return None
-
     soup = BeautifulSoup(html, "html.parser")
 
     for tag in soup(["script", "style", "nav", "footer", "header", "aside", "noscript"]):
         tag.decompose()
 
-    title_element = soup.find(["h1", "h2"])
-    title = (
-        clean_text(title_element.get_text(" ", strip=True))
-        if title_element
-        else fallback_title
-    )
+    images = []
+    for img in soup.find_all("img"):
+        src = img.get("src") or img.get("data-src")
+        alt = clean_text(img.get("alt", ""))
+
+        if not src:
+            continue
+
+        if src.startswith("//"):
+            src = "https:" + src
+        elif src.startswith("/"):
+            src = "https://eldenring.wiki.fextralife.com" + src
+
+        if "eldenring" in src.lower() or "wiki" in src.lower():
+            images.append({"src": src, "alt": alt})
 
     text = soup.get_text("\n", strip=True)
-    version = extract_version(title + " " + text)
+    raw_lines = [clean_text(line) for line in text.split("\n")]
+    lines = [line for line in raw_lines if len(line) > 8]
 
-    lines = [
-        clean_text(line)
-        for line in text.split("\n")
-        if len(clean_text(line)) > 4
-    ]
+    sections = []
+    current = None
+    latest_changes = []  # Acumula cambios antes de la primera versión
+    description_latest = ""
 
-    changes = []
+    for line in lines:
+        lower = line.lower()
 
-    # Busca en listas
-    for li in soup.find_all("li"):
-        detail = clean_text(li.get_text(" ", strip=True))
+        is_version_title = (
+            "patch notes" in lower
+            and any(char.isdigit() for char in line)
+        ) or re.search(r"\bversion\s+[0-9]+\.[0-9]+", lower)
 
-        if len(detail) < 15 or len(detail) > 800:
+        if is_version_title:
+            if current and current["changes"]:
+                sections.append(current)
+
+            version = extract_version(line)
+            current = {
+                "version": version,
+                "date": "Live",
+                "source": "fextralife",
+                "title": line,
+                "url": FEXTRALIFE_PATCH_URL,
+                "description": "",
+                "changes": [],
+                "images": images[:8],
+            }
             continue
 
-        if not any(keyword in detail.lower() for keyword in [
-            "damage", "fixed", "reduced", "increased", "adjusted", "improved",
-            "issue", "bug", "attack", "skill", "weapon", "sorcery", "incantation",
-            "ash", "fp", "stamina", "effect", "range", "speed", "poise",
-        ]):
+        # Antes del primer heading de versión, acumula para "Latest"
+        if not current:
+            relevant = any(w in lower for w in [
+                "damage", "fixed", "increased", "decreased", "adjusted", "reduced",
+                "improved", "changed", "scaling", "fp", "stamina", "poise", "bug",
+                "weapon", "skill", "spell", "incantation", "ash of war", "pvp", "balance",
+            ])
+
+            if relevant and len(line) > 20:
+                latest_changes.append({
+                    "type": classify_change(line),
+                    "item": infer_item(line),
+                    "detail": line,
+                })
+            elif not description_latest and len(line) > 35:
+                description_latest = line[:520]
             continue
 
-        changes.append({
-            "type": classify_change(detail),
-            "item": infer_item(detail),
-            "detail": detail,
-            "images": [],
-        })
+        # Después del primer heading, acumula en versiones
+        relevant = any(w in lower for w in [
+            "damage", "fixed", "increased", "decreased", "adjusted", "reduced",
+            "improved", "changed", "scaling", "fp", "stamina", "poise", "bug",
+            "weapon", "skill", "spell", "incantation", "ash of war", "pvp", "balance",
+        ])
 
-    # Busca en párrafos también
-    for p in soup.find_all("p"):
-        text_p = clean_text(p.get_text(" ", strip=True))
-
-        if len(text_p) < 20 or len(text_p) > 800:
-            continue
-
-        sentences = re.split(r'[.!?]+', text_p)
-
-        for sentence in sentences:
-            sentence = clean_text(sentence)
-
-            if len(sentence) < 15 or len(sentence) > 800:
-                continue
-
-            if not any(keyword in sentence.lower() for keyword in [
-                "damage", "fixed", "reduced", "increased", "adjusted", "improved",
-                "issue", "bug", "attack", "skill", "weapon", "spell",
-                "ash", "fp", "stamina", "effect", "range", "speed",
-            ]):
-                continue
-
-            if any(sentence == c["detail"] for c in changes):
-                continue
-
-            changes.append({
-                "type": classify_change(sentence),
-                "item": infer_item(sentence),
-                "detail": sentence,
-                "images": [],
+        if relevant and len(line) > 20:
+            current["changes"].append({
+                "type": classify_change(line),
+                "item": infer_item(line),
+                "detail": line,
             })
 
-    # Deduplicación
-    seen = set()
-    unique_changes = []
+        elif not current["description"] and len(line) > 35:
+            current["description"] = line[:520]
 
-    for change in changes:
-        key = (change["type"], change["item"], change["detail"])
-        if key not in seen:
-            seen.add(key)
-            unique_changes.append(change)
+    if current and current["changes"]:
+        sections.append(current)
 
-    description = " ".join(lines[:5])[:500]
+    # Agregar sección "Latest" al inicio si tiene cambios
+    if latest_changes:
+        latest_section = {
+            "version": "Latest",
+            "date": "Live",
+            "source": "fextralife",
+            "title": "Elden Ring Patch Notes - Latest Changes",
+            "url": FEXTRALIFE_PATCH_URL,
+            "description": description_latest or "Últimos cambios recopilados desde Fextralife.",
+            "changes": latest_changes[:120],
+            "images": images[:8],
+        }
+        latest_section["summary"] = build_summary(latest_section["changes"])
+        sections.insert(0, latest_section)
 
-    return {
-        "version": version,
-        "date": "Live",
-        "source": "fextralife",
-        "title": title,
-        "url": url,
-        "description": description,
-        "changes": unique_changes[:100],
-        "images": [],
-        "summary": build_summary(unique_changes),
-    }
+    patches = []
 
+    for section in sections[:12]:
+        section["changes"] = section["changes"][:120]
+        section["summary"] = build_summary(section["changes"])
+        patches.append(section)
 
-async def fetch_live_patches() -> list[dict]:
-    """Obtiene todos los parches con concurrencia"""
-    links = await fetch_patch_links()
-
-    if not links:
-        print("[PATCHES] No patch links found")
-        return []
-
-    # Procesa máximo 5 en paralelo
-    semaphore = asyncio.Semaphore(5)
-
-    async def parse_with_semaphore(link: dict) -> dict | None:
-        async with semaphore:
-            try:
-                print(f"[PATCHES] Parsing {link['url']}")
-                patch = await parse_patch_page(link["url"], link["title"])
-
-                if patch and patch["changes"]:
-                    print(f"[PATCHES] ✓ {patch['version']} - {len(patch['changes'])} changes")
-                    return patch
-                else:
-                    print(f"[PATCHES] ⚠ No changes in {link['title']}")
-                    return None
-
-            except Exception as e:
-                print(f"[PATCHES] Error parsing {link['url']}: {e}")
-                return None
-
-    tasks = [parse_with_semaphore(link) for link in links]
-    results = await asyncio.gather(*tasks)
-
-    patches = [p for p in results if p is not None]
-
-    print(f"[PATCHES] Successfully processed {len(patches)} patches")
     return patches
 
 
@@ -283,12 +207,7 @@ async def fetch_live_patches() -> list[dict]:
 async def get_patches():
     now = datetime.utcnow()
 
-    if (
-        CACHE["data"]
-        and CACHE["expires_at"]
-        and CACHE["expires_at"] > now
-    ):
-        print(f"[PATCHES] Returning cached data (expires at {CACHE['expires_at']})")
+    if CACHE["data"] and CACHE["expires_at"] and CACHE["expires_at"] > now:
         return {
             "source": "cache",
             "updated_at": now.isoformat(),
@@ -296,31 +215,16 @@ async def get_patches():
         }
 
     try:
-        print("[PATCHES] Fetching live patches...")
-        patches = await fetch_live_patches()
-
-        CACHE["data"] = patches
-        CACHE["expires_at"] = now + timedelta(hours=24)
-
-        return {
-            "source": "live",
-            "updated_at": now.isoformat(),
-            "patches": patches,
-        }
-
+        patches = await fetch_fextralife_patches()
     except Exception as e:
-        print(f"[PATCHES] Error: {e}")
+        print(f"[PATCHES] Fextralife error: {e}")
+        patches = []
 
-        raise HTTPException(
-            status_code=500,
-            detail="No se pudieron cargar los patch notes.",
-        )
+    CACHE["data"] = patches
+    CACHE["expires_at"] = now + timedelta(hours=24)
 
-
-@router.post("/clear-cache")
-async def clear_cache():
-    """Limpia el cache manualmente"""
-    CACHE["data"] = None
-    CACHE["expires_at"] = None
-    print("[PATCHES] Cache cleared")
-    return {"status": "cache cleared"}
+    return {
+        "source": "fextralife",
+        "updated_at": now.isoformat(),
+        "patches": patches,
+    }

@@ -113,7 +113,6 @@ export default function PatchNotes() {
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_45%_0%,rgba(198,161,91,0.10),transparent_35%),radial-gradient(circle_at_70%_70%,rgba(198,161,91,0.045),transparent_42%)]" />
 
       <div className="relative flex h-full w-full flex-col overflow-hidden border border-[#c6a15b]/20 bg-[#070604]/90 shadow-[0_0_90px_rgba(0,0,0,0.85)] backdrop-blur-xl">
-        <FrameOrnaments />
 
         <div className="relative z-10 flex h-full min-h-0 flex-col px-8 py-6">
           <header className="shrink-0 border-b border-[#c6a15b]/15 pb-6">
@@ -136,10 +135,10 @@ export default function PatchNotes() {
               <button
                 onClick={fetchPatches}
                 disabled={refreshing}
-                className="flex items-center gap-3 border border-[#c6a15b]/20 bg-black/45 px-4 py-2 text-[#c6a15b] backdrop-blur-md transition hover:border-[#c6a15b]/45 hover:bg-[#c6a15b]/10 disabled:opacity-50"
+                className="flex items-center gap-2 px-4 py-2.5 text-[#c6a15b] backdrop-blur-md transition hover:text-[#e5c77e] disabled:opacity-50"
               >
-                <RefreshCw size={15} className={refreshing ? 'animate-spin' : ''} />
-                <span className="text-[11px] font-bold uppercase tracking-[0.22em]">
+                <RefreshCw size={14} className={refreshing ? 'animate-spin' : ''} />
+                <span className="text-[10px] font-bold uppercase tracking-[0.22em]">
                   Refrescar
                 </span>
               </button>
@@ -350,23 +349,22 @@ function ChangeDetailModal({
 
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 px-4 backdrop-blur-md sm:px-6">
-      <div className="relative flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden border border-[#c6a15b]/25 bg-[#070604]/95 shadow-[0_0_90px_rgba(0,0,0,0.9)]">
-        <FrameOrnaments />
+      <div className="relative flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden border border-[#c6a15b]/25 bg-[#070604]/95 shadow-[0_0_90px_rgba(0,0,0,0.9)]">
 
         {/* Header */}
-        <div className="relative z-10 flex items-start justify-between gap-4 border-b border-[#c6a15b]/15 px-6 py-5 sm:px-8 sm:py-6">
+        <div className="relative z-20 flex items-start justify-between gap-6 border-b border-[#c6a15b]/15 px-6 py-6 sm:px-8">
           <div className="min-w-0 flex-1">
-            <div className="flex items-start gap-4 sm:items-center">
-              <div className={`mt-1 grid h-12 w-12 shrink-0 place-items-center border ${meta.className}`}>
-                <Icon size={20} />
+            <div className="flex items-center gap-4">
+              <div className={`grid h-14 w-14 shrink-0 place-items-center border ${meta.className}`}>
+                <Icon size={22} />
               </div>
 
-              <div className="min-w-0 flex-1">
-                <p className="text-[9px] uppercase tracking-[0.28em] text-[#c6a15b]/60">
+              <div className="min-w-0">
+                <p className="text-[10px] uppercase tracking-[0.28em] text-[#c6a15b]/70">
                   {meta.label}
                 </p>
 
-                <h2 className="mt-2 text-lg font-bold tracking-[0.12em] text-[#e5c77e] sm:text-xl">
+                <h2 className="mt-1 text-xl font-bold tracking-[0.12em] text-[#e5c77e] sm:text-2xl">
                   {change.item || 'Cambio General'}
                 </h2>
               </div>
@@ -375,33 +373,33 @@ function ChangeDetailModal({
 
           <button
             onClick={onClose}
-            className="grid h-10 w-10 shrink-0 place-items-center border border-[#c6a15b]/20 bg-black/40 text-[#c6a15b] transition hover:border-[#c6a15b]/50 hover:bg-[#c6a15b]/10"
+            className="mt-1 grid h-10 w-10 shrink-0 place-items-center border border-[#c6a15b]/20 bg-black/40 text-[#c6a15b] transition hover:border-[#c6a15b]/50 hover:bg-[#c6a15b]/10"
           >
             <X size={18} />
           </button>
         </div>
 
         {/* Content */}
-        <div className="relative z-10 min-h-0 flex-1 overflow-y-auto px-6 py-5 custom-scrollbar sm:px-8 sm:py-6">
+        <div className="relative z-10 min-h-0 flex-1 overflow-y-auto px-6 py-7 custom-scrollbar sm:px-8">
           {/* Detail Text */}
-          <div className="mb-8">
-            <p className="text-[9px] uppercase tracking-[0.28em] text-[#c6a15b]/60">
-              Detalles del cambio
+          <div className="mb-10">
+            <p className="text-[10px] uppercase tracking-[0.28em] text-[#c6a15b]/70 mb-4">
+              Detalles
             </p>
 
-            <p className="mt-4 text-sm leading-8 text-stone-300 sm:text-base">
+            <p className="text-base leading-8 text-stone-300">
               {change.detail}
             </p>
           </div>
 
           {/* Images */}
           {change.images && change.images.length > 0 && (
-            <div className="mb-8">
-              <p className="text-[9px] uppercase tracking-[0.28em] text-[#c6a15b]/60">
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.28em] text-[#c6a15b]/70 mb-4">
                 Imágenes relacionadas
               </p>
 
-              <div className="mt-4 grid gap-4 sm:grid-cols-2">
+              <div className="grid gap-4 sm:grid-cols-2">
                 {change.images.map((image, index) => (
                   <div
                     key={`${image.src}-${index}`}
@@ -410,7 +408,7 @@ function ChangeDetailModal({
                     <img
                       src={image.src}
                       alt={image.alt}
-                      className="h-48 w-full object-cover opacity-85 transition hover:opacity-100"
+                      className="h-56 w-full object-cover opacity-85 transition hover:opacity-100"
                     />
                   </div>
                 ))}
