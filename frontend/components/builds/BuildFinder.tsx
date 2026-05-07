@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { Sword, Shield, Sparkles, Ghost, Scroll, Box } from 'lucide-react'
 
 interface BuildItem {
   name: string
@@ -56,31 +57,27 @@ export default function BuildFinder() {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#0a0a0a] text-[#e0e0e0] font-sans">
-
+    <div className="flex h-screen overflow-hidden bg-[#0a0a0a] text-[#e0e0e0]">
       {/* Sidebar */}
       <aside className="w-80 border-r border-[#c9a84c]/20 bg-[#0f0f0f] flex flex-col shadow-2xl">
-        <div className="p-8 border-b border-[#c9a84c]/10 bg-gradient-to-b from-[#1a1a1a] to-transparent">
-          <h2 className="font-cinzel text-xl text-[#c9a84c] tracking-[0.2em] text-center">FORJA DE BUILDS</h2>
-          <div className="h-[1px] w-24 bg-[#c9a84c]/40 mx-auto mt-2" />
-          <p className="text-[9px] text-gray-500 mt-4 text-center uppercase tracking-widest opacity-60">
-            Elden Ring Knowledge Base
-          </p>
+        <div className="p-8 border-b border-[#c9a84c]/10 bg-gradient-to-b from-[#1a1a1a] to-transparent text-center">
+          <h2 className="font-cinzel text-xl text-[#c9a84c] tracking-[0.2em]">FORJA DE BUILDS</h2>
+          <div className="h-px w-24 bg-[#c9a84c]/40 mx-auto mt-2" />
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-3">
+        <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
           {PLAYSTYLES.map(p => (
             <button
               key={p.id}
               onClick={() => setSelected(p.id)}
-              className={`w-full text-left p-4 rounded-sm border transition-all duration-500 group ${
+              className={`w-full text-left p-4 rounded-sm border transition-all duration-300 group ${
                 selected === p.id
-                  ? 'bg-[#c9a84c]/5 border-[#c9a84c]/60'
+                  ? 'bg-[#c9a84c]/10 border-[#c9a84c]/60 shadow-[0_0_15px_rgba(201,168,76,0.1)]'
                   : 'border-white/5 hover:border-[#c9a84c]/30 hover:bg-white/[0.02]'
               }`}
             >
               <div className="flex items-center gap-4">
-                <span className={`text-2xl transition-transform duration-500 ${selected === p.id ? 'scale-110' : 'opacity-50 group-hover:opacity-100'}`}>
+                <span className={`text-2xl transition-transform ${selected === p.id ? 'scale-110' : 'opacity-50 group-hover:opacity-100'}`}>
                   {p.icon}
                 </span>
                 <div>
@@ -98,7 +95,7 @@ export default function BuildFinder() {
           <button
             onClick={search}
             disabled={!selected || loading}
-            className="w-full bg-transparent border border-[#c9a84c] text-[#c9a84c] hover:bg-[#c9a84c] hover:text-black disabled:opacity-20 disabled:cursor-not-allowed font-cinzel py-4 rounded-sm text-xs tracking-[0.3em] transition-all duration-700 active:scale-95"
+            className="w-full bg-transparent border border-[#c9a84c] text-[#c9a84c] hover:bg-[#c9a84c] hover:text-black disabled:opacity-20 disabled:cursor-not-allowed font-cinzel py-4 rounded-sm text-xs tracking-[0.3em] transition-all duration-500"
           >
             {loading ? 'RECOLECTANDO RUNAS...' : 'FORJAR BUILD'}
           </button>
@@ -106,195 +103,82 @@ export default function BuildFinder() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto">
-
-        {/* Estado vacío */}
+      <main className="flex-1 overflow-y-auto bg-[url('/gold-dust.png')] bg-fixed">
         {!build && !loading && (
-          <div className="h-full flex flex-col items-center justify-center">
-            <p className="font-cinzel tracking-[0.4em] text-gray-600 animate-pulse">
-              Selecciona tu destino
+          <div className="h-full flex flex-col items-center justify-center opacity-30">
+            <p className="font-cinzel tracking-[0.4em] text-[#c9a84c] animate-pulse uppercase text-sm">
+              Selecciona tu destino, Sinluz
             </p>
           </div>
         )}
 
-        {/* Loading */}
         {loading && (
           <div className="h-full flex flex-col items-center justify-center">
-            <div className="w-16 h-16 border border-[#c9a84c]/30 border-t-[#c9a84c] rounded-full animate-spin mb-4" />
-            <p className="font-cinzel text-[10px] tracking-[0.5em] text-[#c9a84c]">
-              Consultando la Gracia...
+            <div className="relative w-20 h-20">
+               <div className="absolute inset-0 border-2 border-[#c9a84c]/20 rounded-full"></div>
+               <div className="absolute inset-0 border-t-2 border-[#c9a84c] rounded-full animate-spin"></div>
+            </div>
+            <p className="font-cinzel text-[10px] tracking-[0.5em] text-[#c9a84c] mt-6 animate-pulse">
+              CONSULTANDO LA GRACIA...
             </p>
           </div>
         )}
 
-        {/* Build resultado */}
         {build && !loading && (
-          <div className="p-10 max-w-6xl mx-auto">
-
-            {/* Header */}
-            <div className="relative mb-8 text-center">
-              <h1 className="text-5xl font-cinzel text-[#c9a84c] mb-2 uppercase tracking-[0.1em]">
+          <div className="p-10 max-w-6xl mx-auto animate-in fade-in duration-700">
+            {/* Header de la Build */}
+            <div className="text-center mb-12 relative">
+              <h1 className="text-6xl font-cinzel text-[#c9a84c] mb-4 tracking-tighter drop-shadow-2xl">
                 {build.build_name}
               </h1>
-              <div className="flex items-center justify-center gap-4 mb-3">
-                <div className="h-[1px] w-32 bg-gradient-to-r from-transparent to-[#c9a84c]/50" />
-                <span className="font-cinzel text-[10px] text-gray-500 tracking-[0.3em]">
-                  RECOMENDACIÓN DEL ANALISTA
-                  {build.description && build.source !== 'ai' && (
-  <p className="text-[11px] text-center max-w-2xl mx-auto mt-3 leading-relaxed" style={{ color: 'var(--text-ash)' }}>
-    {build.description}
-  </p>
-)}
-                </span>
-                <div className="h-[1px] w-32 bg-gradient-to-l from-transparent to-[#c9a84c]/50" />
+              <div className="flex items-center justify-center gap-6 text-[10px] tracking-[0.3em] text-gray-500 uppercase">
+                <div className="h-px w-20 bg-gradient-to-r from-transparent to-[#c9a84c]/50" />
+                <span>Build de Analista</span>
+                <div className="h-px w-20 bg-gradient-to-l from-transparent to-[#c9a84c]/50" />
               </div>
-
-              {/* Fuente */}
-              <div className="flex items-center justify-center gap-3 mt-2">
-                {build.source === 'reddit' ? (
-                  <>
-                    <span
-                      className="text-[9px] px-2 py-1 tracking-widest uppercase"
-                      style={{
-                        background: 'rgba(255,69,0,0.1)',
-                        border: '1px solid rgba(255,69,0,0.3)',
-                        color: '#FF6040',
-                        borderRadius: '2px',
-                      }}
-                    >
-                      ◉ Reddit
-                    </span>
-                    {build.author && (
-                      <span className="text-[10px] text-gray-500">
-                        por u/{build.author}
-                      </span>
-                    )}
-                    {build.upvotes && (
-                      <span className="text-[10px] text-[#c9a84c]/60">
-                        ▲ {build.upvotes}
-                      </span>
-                    )}
-                    {build.reddit_url && (
-                      
-                        <a href={build.reddit_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-[10px] text-[#c9a84c]/40 hover:text-[#c9a84c] transition-colors underline"
-                      >
-                        Ver post original →
-                      </a>
-                    )}
-                  </>
-                ) : (
-                  <span
-                    className="text-[9px] px-2 py-1 tracking-widest uppercase"
-                    style={{
-                      background: 'rgba(201,168,76,0.08)',
-                      border: '1px solid rgba(201,168,76,0.2)',
-                      color: '#7A6030',
-                      borderRadius: '2px',
-                    }}
-                  >
-                    ◈ Generada por IA
-                  </span>
-                )}
-              </div>
-
-              <button
-                onClick={() => setBuild(null)}
-                className="absolute top-0 right-0 text-[9px] text-gray-600 hover:text-[#c9a84c] transition-colors uppercase tracking-widest"
-              >
-                [ Deshacer ]
-              </button>
             </div>
 
-            {/* Great Rune */}
-            {build.great_rune && build.great_rune.name !== 'None' && (
-              <div className="flex justify-center mb-10">
-                <div className="flex items-center gap-6 p-4 bg-gradient-to-r from-transparent via-[#c9a84c]/5 to-transparent border-y border-[#c9a84c]/20 w-full max-w-xl">
-                  <div className="w-20 h-20 bg-black/40 border border-[#c9a84c]/30 p-2 rounded">
-                    {build.great_rune.image ? (
-                      <img
-                        src={build.great_rune.image}
-                        alt={build.great_rune.name}
-                        className="w-full h-full object-contain"
-                      />
-                    ) : (
-                      <div className="h-full flex items-center justify-center text-[8px] text-gray-700">
-                        RUNA
-                      </div>
-                    )}
-                  </div>
-                  <div className="text-left">
-                    <h3 className="text-[#c9a84c] font-cinzel text-xs tracking-widest mb-1">GREAT RUNE</h3>
-                    <p className="text-xl text-white font-medium">{build.great_rune.name}</p>
-                    <p className="text-[10px] text-gray-500 italic mt-1">
-                      El poder del Círculo de Elden restaurado.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Grid de secciones */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              <BuildSection title="Armas de Guerra"          items={build.weapon}       icon="⚔" color="#c9a84c" />
-              <BuildSection title="Indumentaria"             items={build.armor}        icon="🛡" color="#8e8e8e" />
-              <BuildSection title="Talismanes"               items={build.talismans}    icon="◆" color="#d4af37" />
-              {build.spells && build.spells.length > 0 && (
-                <BuildSection title="Hechizos y Encantamientos" items={build.spells}   icon="✦" color="#60a5fa" />
-              )}
-              <BuildSection title="Cenizas de Guerra"        items={build.skills}       icon="◈" color="#4ade80" />
-              <BuildSection title="Cenizas de Espíritu"      items={build.spirit_ashes} icon="◎" color="#a78bfa" />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <BuildCard title="Armamento" items={build.weapon} icon={<Sword size={16}/>} accent="#c9a84c" />
+              <BuildCard title="Indumentaria" items={build.armor} icon={<Shield size={16}/>} accent="#8e8e8e" />
+              <BuildCard title="Talismanes" items={build.talismans} icon={<Box size={16}/>} accent="#d4af37" />
+              <BuildCard title="Cenizas" items={build.skills} icon={<Sparkles size={16}/>} accent="#4ade80" />
+              <BuildCard title="Espíritus" items={build.spirit_ashes} icon={<Ghost size={16}/>} accent="#a78bfa" />
+              {build.spells && <BuildCard title="Magia" items={build.spells} icon={<Scroll size={16}/>} accent="#60a5fa" />}
             </div>
-
           </div>
         )}
-
       </main>
     </div>
   )
 }
 
-function BuildSection({
-  title, items, icon, color,
-}: {
-  title: string
-  items: BuildItem[]
-  icon: string
-  color: string
-}) {
-  if (!items || items.length === 0) return null
-
+function BuildCard({ title, items, icon, accent }: { title: string, items: any[], icon: any, accent: string }) {
   return (
-    <section className="bg-[#121212]/80 border border-[#c9a84c]/10 rounded-sm overflow-hidden shadow-xl hover:border-[#c9a84c]/30 transition-all duration-500">
-      <div className="px-5 py-3 border-b border-[#c9a84c]/10 flex items-center justify-between bg-black/40">
-        <h3 className="font-cinzel text-[11px] tracking-[0.2em] uppercase" style={{ color }}>
-          {title}
-        </h3>
-        <span className="opacity-50 text-sm" style={{ color }}>{icon}</span>
+    <div className="group bg-[#121212]/60 border border-white/5 hover:border-[#c9a84c]/30 p-4 rounded-sm transition-all duration-500">
+      <div className="flex items-center justify-between mb-4 border-b border-white/5 pb-2">
+        <h3 className="font-cinzel text-[11px] tracking-widest uppercase opacity-80" style={{ color: accent }}>{title}</h3>
+        <span style={{ color: accent }}>{icon}</span>
       </div>
-      <div className="p-4 space-y-4">
+      <div className="space-y-3">
         {items.map((item, i) => (
-          <div key={i} className="flex gap-4 items-center group/item">
-            <div className="w-14 h-14 bg-[#1a1a1a] border border-white/5 rounded-sm flex-shrink-0 flex items-center justify-center overflow-hidden group-hover/item:border-[#c9a84c]/40 transition-colors">
+          <div key={i} className="flex items-center gap-3 group/item">
+            <div className="w-12 h-12 bg-black/40 border border-white/10 rounded-sm overflow-hidden flex-shrink-0 group-hover/item:border-[#c9a84c]/50 transition-colors">
               {item.image ? (
                 <img src={item.image} alt={item.name} className="w-full h-full object-contain p-1" />
               ) : (
-                <div className="text-[8px] text-gray-700 font-cinzel">VACÍO</div>
+                <div className="w-full h-full flex items-center justify-center text-[8px] text-gray-700 font-cinzel">N/A</div>
               )}
             </div>
-            <div className="flex-1">
-              <h4 className="text-[12px] font-medium text-gray-300 group-hover/item:text-[#c9a84c] transition-colors leading-tight">
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-gray-300 truncate group-hover/item:text-[#c9a84c] transition-colors">
                 {item.name}
-              </h4>
-              <p className="text-[9px] text-gray-600 uppercase tracking-tighter mt-1 italic">
-                Objeto de Gracia
               </p>
+              <p className="text-[9px] text-gray-600 italic uppercase">Objeto de Gracia</p>
             </div>
           </div>
         ))}
       </div>
-    </section>
+    </div>
   )
 }

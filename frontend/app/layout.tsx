@@ -21,7 +21,7 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="h-screen overflow-hidden" style={{ background: 'var(--bg-void)' }}>
+      <body style={{ background: 'var(--bg-void)' }}>
         {children}
       </body>
     </html>

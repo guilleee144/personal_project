@@ -1,50 +1,69 @@
+import Link from 'next/link'
+import Image from 'next/image'
+
 export default function Topbar() {
   return (
-    <header
-      className="h-[52px] flex items-center px-5 gap-4 flex-shrink-0 relative"
-      style={{
-        background: 'var(--bg-deep)',
-        borderBottom: '1px solid var(--border-gold)',
-      }}
-    >
-      {/* Gold line bottom */}
-      <div className="gold-line absolute bottom-0 left-0 right-0" />
+    <header style={{
+      height: 56,
+      background: 'rgba(8,7,6,0.95)',
+      backdropFilter: 'blur(12px)',
+      borderBottom: '1px solid rgba(201,168,76,0.12)',
+      display: 'flex',
+      alignItems: 'center',
+      padding: '0 20px',
+      gap: 16,
+      flexShrink: 0,
+      position: 'relative',
+      zIndex: 50,
+    }}>
+      {/* Gold line */}
+      <div style={{
+        position: 'absolute', bottom: 0, left: 0, right: 0, height: 1,
+        background: 'linear-gradient(90deg, transparent, rgba(201,168,76,0.3), transparent)',
+      }} />
 
       {/* Logo */}
-      <div className="flex items-center gap-3">
-        <div
-          className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-cinzel"
-          style={{ border: '1.5px solid var(--gold)', color: 'var(--gold)' }}
-        >
-          ✦
-        </div>
-        <span
-          className="font-cinzel text-sm font-bold tracking-[3px] uppercase"
-          style={{ color: 'var(--gold)' }}
-        >
-          The Souls Grail
+      <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
+        <div style={{
+          width: 30, height: 30, borderRadius: '50%',
+          border: '1px solid rgba(201,168,76,0.4)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 12, color: '#C9A84C',
+          background: 'rgba(201,168,76,0.05)',
+        }}>✦</div>
+        <span style={{
+          fontFamily: "'Cinzel',serif", fontSize: 13, fontWeight: 700,
+          letterSpacing: 3, textTransform: 'uppercase', color: '#C9A84C',
+        }}>The Souls Grail</span>
+      </Link>
+
+      {/* Center — breadcrumb */}
+      <div style={{
+        position: 'absolute', left: '50%', transform: 'translateX(-50%)',
+        display: 'flex', alignItems: 'center', gap: 6,
+      }}>
+        <span style={{ fontFamily: "'Cinzel',serif", fontSize: 9, letterSpacing: 3, textTransform: 'uppercase', color: 'rgba(201,168,76,0.3)' }}>
+          Dashboard
         </span>
       </div>
 
-      {/* Badges */}
-      <div className="ml-auto flex items-center gap-3">
-        <span
-          className="text-[10px] px-3 py-1 tracking-widest uppercase"
-          style={{
-            background: 'rgba(120,80,200,0.2)',
-            border: '1px solid rgba(120,80,200,0.5)',
-            color: '#C090FF',
-            borderRadius: '2px',
-          }}
-        >
-          Shadow of the Erdtree
-        </span>
-        <div className="flex items-center gap-2 text-[11px]" style={{ color: 'var(--text-ash)' }}>
-          <div
-            className="w-1.5 h-1.5 rounded-full pulse"
-            style={{ background: '#60C060' }}
-          />
-          Supabase Online
+      {/* Right badges */}
+      <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 12 }}>
+        <span style={{
+          fontFamily: "'Cinzel',serif", fontSize: 9, letterSpacing: 2, textTransform: 'uppercase',
+          padding: '4px 12px', borderRadius: 2,
+          background: 'rgba(120,80,200,0.12)',
+          border: '1px solid rgba(120,80,200,0.35)',
+          color: '#B080F0',
+        }}>✦ Shadow of the Erdtree</span>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: '#6A6058' }}>
+          <div style={{
+            width: 6, height: 6, borderRadius: '50%', background: '#50A050',
+            boxShadow: '0 0 6px rgba(80,160,80,0.5)',
+            animation: 'pulse 2s infinite',
+          }} />
+          <span style={{ fontFamily: "'Cinzel',serif", fontSize: 9, letterSpacing: 1.5 }}>Supabase</span>
         </div>
       </div>
     </header>
