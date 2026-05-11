@@ -4,20 +4,20 @@ import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 
-const FEATURES = [
-  { icon: '◈', title: 'AI Companion',          badge: 'live' as const, desc: 'Un agente inteligente que consulta la base de datos en tiempo real y genera recomendaciones precisas según tu estilo de juego.' },
-  { icon: '⚔', title: 'Build Finder',           badge: 'live' as const, desc: 'Busca builds reales en la comunidad y las enriquece con datos de nuestra base de datos. Sangrado, fuerza, fe, magia y más.' },
-  { icon: '◉', title: 'Patch Notes',            badge: 'soon' as const, desc: 'Feed de noticias sobre parches, buffs y nerfs rastreados desde la comunidad. Sabrás si tu arma favorita ha cambiado.' },
-  { icon: '✦', title: 'Shadow of the Erdtree', badge: 'dlc'  as const, desc: 'Base de datos completa con todos los items, armas, hechizos y jefes del DLC. Builds exclusivas del mundo de las Sombras.' },
-  { icon: '◆', title: 'Base de Datos Completa', badge: 'live' as const, desc: 'Más de 2.000 items en Supabase: armas, armaduras, talismanes, hechizos, cenizas de guerra, espíritus y mucho más.' },
-  { icon: '◎', title: 'Explorador de Lore',     badge: 'soon' as const, desc: 'Explora jefes, NPCs, localizaciones y criaturas con descripciones detalladas y mapas interactivos.' },
+const FEATURES : Array<{ icon: string; title: string; badge: 'live' | 'dlc' | 'progress' | 'soon'; desc: string }> =[
+  { icon: '◈', title: 'AI Companion',          badge: 'live' as const, desc: 'An intelligent agent that consults the database in real-time and generates precise recommendations based on your playstyle.' },
+  { icon: '⚔', title: 'Build Finder',           badge: 'live' as const, desc: 'Search real builds from the community and enrich them with data from our database. Bleed, strength, faith, magic and more.' },
+  { icon: '◉', title: 'Patch Notes',            badge: 'live' as const, desc: 'News feed about patches, buffs and nerfs tracked from the community. Know if your favorite weapon has changed.' },
+  { icon: '✦', title: 'Shadow of the Erdtree', badge: 'dlc'  as const, desc: 'Complete database with all items, weapons, spells and bosses from the DLC. Exclusive builds from the world of the Shadows.' },
+  { icon: '◆', title: 'Complete Database', badge: 'live' as const, desc: 'Over 2,000 items in Supabase: weapons, armor, talismans, spells, ashes of war, spirits and much more.' },
+  { icon: '◎', title: 'Lore Explorer', badge: 'progress' as const, desc: 'Explore bosses, NPCs, locations and creatures with detailed descriptions and interactive maps.' },
 ]
 
 const STATS = [
-  { number: '2.000+', label: 'Items en DB' },
-  { number: '7',      label: 'Estilos de Build' },
-  { number: '100%',   label: 'DLC incluido' },
-  { number: '∞',      label: 'Builds posibles' },
+  { number: '2.000+', label: 'Items in DB' },
+  { number: '150+',      label: 'Bosses' },
+  { number: '100%',   label: 'DLC included' },
+  { number: '∞',      label: 'Possible Builds' },
 ]
 
 const TECH = [
@@ -28,17 +28,18 @@ const TECH = [
 const SECTIONS = ['hero', 'features', 'tech', 'cta']
 
 const gold         = '#C9A84C'
-const goldDim      = '#7A6030'
 const goldFaint    = 'rgba(201,168,76,0.15)'
 const goldGlow     = 'rgba(201,168,76,0.05)'
 const textAsh      = '#9A9080'
-const textDim      = '#5A5040'
+const textDim      = '#9A8870'
+const goldDim      = '#C8B070'
 const textRune     = '#E8D8A0'
 const bgVoid       = '#060504'
 
 const BADGE: Record<string, { bg: string; border: string; color: string; label: string }> = {
-  live: { bg: 'rgba(40,100,40,0.2)',   border: 'rgba(60,140,60,0.4)',  color: '#80C080', label: '● En vivo' },
-  soon: { bg: 'rgba(201,168,76,0.08)', border: 'rgba(201,168,76,0.2)', color: goldDim,   label: '◌ Próximamente' },
+  live: { bg: 'rgba(40,100,40,0.2)',   border: 'rgba(60,140,60,0.4)',  color: '#80C080', label: '● Live' },
+  soon: { bg: 'rgba(201,168,76,0.08)', border: 'rgba(201,168,76,0.2)', color: goldDim,   label: '◌ Coming Soon' },
+  progress: { bg: 'rgba(100,150,200,0.15)', border: 'rgba(120,170,220,0.3)', color: '#80B8FF', label: '◐ In Progress' },
   dlc:  { bg: 'rgba(120,80,200,0.15)', border: 'rgba(160,96,224,0.3)', color: '#C090FF', label: '✦ DLC' },
 }
 
@@ -146,7 +147,7 @@ export default function LandingPage() {
               fontFamily: "'Cinzel',serif", fontSize: 10, letterSpacing: 2, textTransform: 'uppercase',
               color: gold, padding: '8px 20px', border: `1px solid rgba(201,168,76,0.5)`,
               borderRadius: 2, textDecoration: 'none', transition: 'all 0.3s',
-            }}>Entrar</Link>
+            }}>Enter</Link>
           </div>
         </nav>
 
@@ -204,8 +205,8 @@ export default function LandingPage() {
             color: textAsh, maxWidth: 520, lineHeight: 1.7, marginBottom: 36,
             fontSize: 'clamp(15px,2.2vw,19px)',
           }}>
-            Tu compañero inteligente en las Tierras Intermedias. Builds reales,
-            datos en vivo y recomendaciones precisas para cada Sinluz.
+            Your intelligent companion in the Lands Between. Real builds,
+            live data and precise recommendations for every Tarnished.
           </p>
 
           {/* Buttons */}
@@ -215,13 +216,13 @@ export default function LandingPage() {
               letterSpacing: 3, textTransform: 'uppercase', textDecoration: 'none',
               padding: '13px 32px', borderRadius: 2, background: gold, color: bgVoid,
               transition: 'all 0.3s',
-            }}>Invocar la Gracia</Link>
+            }}>Invoke the Grace</Link>
             <button onClick={() => goTo(1)} style={{
               fontFamily: "'Cinzel',serif", fontSize: 11, letterSpacing: 3,
               textTransform: 'uppercase', padding: '13px 32px', borderRadius: 2,
               border: `1px solid rgba(201,168,76,0.4)`, color: gold,
               background: 'transparent', cursor: 'pointer', transition: 'all 0.3s',
-            }}>Ver Features</button>
+            }}>View Features</button>
           </div>
 
           {/* Stats */}
@@ -263,13 +264,13 @@ export default function LandingPage() {
         }}>
           <div style={{ textAlign: 'center', marginBottom: 48 }}>
             <span style={{ fontFamily: "'Cinzel',serif", fontSize: 9, letterSpacing: 4, textTransform: 'uppercase', color: gold, display: 'block', marginBottom: 12 }}>
-              ◈ Funcionalidades
+              ◈ Features
             </span>
             <h2 style={{ fontFamily: "'Cinzel',serif", fontWeight: 700, textTransform: 'uppercase', letterSpacing: 2, marginBottom: 12, fontSize: 'clamp(20px,3.5vw,36px)', color: textRune }}>
-              Todo lo que necesitas
+              Everything you need
             </h2>
             <p style={{ fontFamily: "'Crimson Pro',serif", fontStyle: 'italic', fontSize: 17, color: textDim }}>
-              Desde builds meta hasta exploración de lore, todo en un solo lugar.
+              From meta builds to lore exploration, everything in one place.
             </p>
           </div>
 
@@ -283,7 +284,7 @@ export default function LandingPage() {
               const b = BADGE[f.badge]
               return (
                 <div key={f.title}
-                  style={{ background: bgVoid, padding: '32px 28px', position: 'relative', overflow: 'hidden', transition: 'background 0.3s', cursor: 'default', opacity: f.badge === 'soon' ? 0.55 : 1 }}
+                  style={{ background: bgVoid, padding: '32px 28px', position: 'relative', overflow: 'hidden', transition: 'background 0.3s', cursor: 'default', opacity: (f.badge === 'soon' || f.badge === 'progress') ? 0.6 : 1 }}
                   onMouseEnter={e => (e.currentTarget.style.background = 'rgba(201,168,76,0.03)')}
                   onMouseLeave={e => (e.currentTarget.style.background = bgVoid)}
                 >
@@ -313,13 +314,13 @@ export default function LandingPage() {
         }}>
           <div style={{ textAlign: 'center', maxWidth: 800 }}>
             <span style={{ fontFamily: "'Cinzel',serif", fontSize: 9, letterSpacing: 4, textTransform: 'uppercase', color: gold, display: 'block', marginBottom: 12 }}>
-              ◈ Proyecto Personal · Portfolio
+              ◈ Personal Project · Portfolio
             </span>
             <h2 style={{ fontFamily: "'Cinzel',serif", fontWeight: 700, textTransform: 'uppercase', letterSpacing: 2, marginBottom: 12, fontSize: 'clamp(20px,3.5vw,36px)', color: textRune }}>
-              Stack Tecnológico
+              Tech Stack
             </h2>
             <p style={{ fontFamily: "'Crimson Pro',serif", fontStyle: 'italic', fontSize: 17, color: textDim, marginBottom: 48 }}>
-              Construido con tecnologías modernas, IA real y datos en vivo.
+              Built with modern technologies, real AI and live data.
             </p>
             <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 10 }}>
               {TECH.map(t => (
@@ -349,16 +350,16 @@ export default function LandingPage() {
 
           <span style={{ fontFamily: "'Cinzel',serif", fontSize: 64, color: 'rgba(201,168,76,0.07)', letterSpacing: 10, display: 'block', marginBottom: -10 }}>✦</span>
           <h2 style={{ fontFamily: "'Cinzel',serif", fontWeight: 700, textTransform: 'uppercase', letterSpacing: 3, marginBottom: 16, fontSize: 'clamp(24px,5vw,48px)', color: textRune }}>
-            Que la Gracia te guíe
+            May Grace guide you
           </h2>
           <p style={{ fontFamily: "'Crimson Pro',serif", fontStyle: 'italic', fontSize: 18, color: textDim, marginBottom: 40, maxWidth: 440 }}>
-            Comienza tu viaje. Las Tierras Intermedias te esperan.
+            Begin your journey. The Lands Between await.
           </p>
           <Link href="/dashboard" style={{
             fontFamily: "'Cinzel',serif", fontWeight: 700, fontSize: 11,
             letterSpacing: 3, textTransform: 'uppercase', textDecoration: 'none',
             padding: '14px 40px', borderRadius: 2, background: gold, color: bgVoid,
-          }}>Entrar al Compendio</Link>
+          }}>Enter the Compendium</Link>
 
           {/* Footer */}
           <div style={{
@@ -368,11 +369,11 @@ export default function LandingPage() {
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           }}>
             <span style={{ fontFamily: "'Cinzel',serif", fontSize: 9, letterSpacing: 2, textTransform: 'uppercase', color: '#2A2010' }}>
-              © 2025 The Souls Grail · Proyecto Personal
+              © 2025 The Souls Grail · Personal Project
             </span>
             <span style={{ fontFamily: "'Cinzel',serif", fontSize: 11, letterSpacing: 4, color: 'rgba(201,168,76,0.12)' }}>✦ ◈ ✦</span>
             <span style={{ fontFamily: "'Cinzel',serif", fontSize: 9, letterSpacing: 2, textTransform: 'uppercase', color: '#2A2010' }}>
-              Fan Project · No afiliado con FromSoftware
+              Fan Project · Not affiliated with FromSoftware
             </span>
           </div>
         </section>

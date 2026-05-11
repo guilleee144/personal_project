@@ -19,11 +19,11 @@ interface Message {
 }
 
 const PRESETS = [
-  { label: 'Sangrado DLC', prompt: 'Busco una build de Sangrado para el DLC Shadow of the Erdtree', icon: <Droplet size={18} /> },
-  { label: 'Mago de Fe', prompt: 'Quiero una build de hechizos de Fe con buena defensa', icon: <Sun size={18} /> },
-  { label: 'Fuerza Colosal', prompt: 'Recomiéndame armas colosales para una build de Fuerza pura', icon: <Sword size={18} /> },
-  { label: 'Asesino Destreza', prompt: 'Build de Destreza con sangrado y cenizas de guerra rápidas', icon: <Flame size={18} /> },
-  { label: 'Invocador', prompt: 'Qué spirit ashes son las mejores para apoyar en jefes difíciles', icon: <BookOpen size={18} /> },
+  { label: 'Bleed DLC', prompt: 'I\'m looking for a Bleed build for the Shadow of the Erdtree DLC', icon: <Droplet size={18} /> },
+  { label: 'Faith Mage', prompt: 'I want a Faith spell build with good defense', icon: <Sun size={18} /> },
+  { label: 'Colossal Strength', prompt: 'Recommend me colossal weapons for a pure Strength build', icon: <Sword size={18} /> },
+  { label: 'Dexterity Assassin', prompt: 'Dexterity build with bleed and fast ashes of war', icon: <Flame size={18} /> },
+  { label: 'Summoner', prompt: 'What spirit ashes are best for supporting in difficult bosses', icon: <BookOpen size={18} /> },
 ]
 
 function CornerOrnament({ position }: { position: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' }) {
@@ -76,7 +76,7 @@ export default function AgentChat() {
       id: 'welcome',
       role: 'ai',
       content:
-        'Que la Gracia te guíe, Sinluz. Soy tu compañero en las Tierras Intermedias.\nPregúntame sobre builds, armas o estrategias.',
+        'May Grace guide you, Tarnished. I am your companion in the Lands Between.\nAsk me about builds, weapons or strategies.',
       timestamp: new Date(),
     },
   ])
@@ -126,7 +126,7 @@ export default function AgentChat() {
         {
           id: `${Date.now()}-error`,
           role: 'ai',
-          content: 'La conexión con la Gracia se ha perdido. Los Dos Dedos no responden.',
+          content: 'Connection to Grace has been lost. The Two Fingers do not respond.',
           timestamp: new Date(),
         },
       ])
@@ -140,7 +140,7 @@ export default function AgentChat() {
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_45%_0%,rgba(198,161,91,0.10),transparent_35%),radial-gradient(circle_at_50%_65%,rgba(198,161,91,0.045),transparent_45%)]" />
 
       <div className="relative flex h-full w-full flex-col overflow-hidden border border-[#c6a15b]/20 bg-[#070604]/90 shadow-[0_0_90px_rgba(0,0,0,0.85)] backdrop-blur-xl">
-        {/* Corner Ornaments - Posicionados sin superposición */}
+        {/* Corner Ornaments - Positioned without overlap */}
         <CornerOrnament position="top-left" />
         <CornerOrnament position="top-right" />
         <CornerOrnament position="bottom-left" />
@@ -156,7 +156,7 @@ export default function AgentChat() {
 
                 <div>
                   <h2 className="text-xl font-bold uppercase tracking-[0.34em] text-[#e5c77e]">
-                    Compañero de Gracia
+                    Grace Companion
                   </h2>
                   <p className="mt-1 text-[11px] uppercase tracking-[0.28em] text-stone-500">
                     Llama 3.3 · Elden Knowledge Base
@@ -249,7 +249,7 @@ export default function AgentChat() {
                             <span className="h-3 w-3 rounded-full bg-gradient-to-b from-[#d8b66f] to-[#c6a15b] animate-pulse animation-delay-150 shadow-[0_0_10px_rgba(216,182,111,0.8)]" />
                             <span className="h-3 w-3 rounded-full bg-gradient-to-b from-[#d8b66f] to-[#c6a15b] animate-pulse animation-delay-300 shadow-[0_0_10px_rgba(216,182,111,0.8)]" />
                           </div>
-                          <span className="font-medium tracking-wide text-[#e5c77e]">Consultando el Árbol Áureo...</span>
+                          <span className="font-medium tracking-wide text-[#e5c77e]">Consulting the Erdtree...</span>
                         </div>
                       </div>
                     </div>
@@ -273,7 +273,7 @@ export default function AgentChat() {
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Escribe tu consulta sobre las Tierras Intermedias..."
+                placeholder="Ask your question about the Lands Between..."
                 className="min-w-0 flex-1 bg-transparent px-6 py-4 text-sm text-stone-200 outline-none placeholder:text-stone-600"
               />
 
@@ -287,7 +287,7 @@ export default function AgentChat() {
             </form>
 
             <p className="mt-3 text-center text-[10px] uppercase tracking-[0.32em] text-stone-600">
-              Pulsa Enter para enviar · La información puede variar según el parche actual
+              Press Enter to send · Information may vary depending on current patch
             </p>
           </footer>
         </div>
