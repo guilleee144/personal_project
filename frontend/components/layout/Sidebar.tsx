@@ -18,15 +18,14 @@ const NAV_ITEMS = [
     items: [
       { id: 'patches', icon: '◉', label: 'Patch Notes', count: null, live: true },
       { id: 'bosses',  icon: '☠', label: 'Bosses',      count: null, live: true },
-      { id: 'items',   icon: '◆', label: 'Items',       count: null, live: false },
-      { id: 'spells',  icon: '✦', label: 'Spells',      count: null, live: false },
+      { id: 'items', icon: '◆', label: 'Items',         count: null, live: true },
     ],
   },
   {
     section: 'Lore',
     items: [
-      { id: 'npcs',      icon: '◎', label: 'NPCs',       count: null, live: false },
-      { id: 'locations', icon: '◇', label: 'Locations',  count: null, live: false },
+      { id: 'npcs',      icon: '◎', label: 'NPCs',       count: null, live: true },
+      { id: 'locations', icon: '◇', label: 'Locations',  count: null, live: true },
     ],
   },
 ]

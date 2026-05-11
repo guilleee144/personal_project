@@ -7,6 +7,9 @@ import AgentChat from '@/components/agent/AgentChat'
 import BuildFinder from '@/components/builds/BuildFinder'
 import PatchNotes from '@/components/patches/PatchNotes'
 import Bosses from '@/components/bosses/Bosses'
+import Items from '@/components/items/Items'
+import NPCs from '@/components/npcs/Npcs'
+import Locations from '@/components/locations/Locations'
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState('agent')
@@ -24,6 +27,15 @@ export default function Dashboard() {
 
       case 'bosses':
         return <Bosses />
+
+      case 'items': 
+        return <Items />
+      
+      case 'npcs':
+        return <NPCs />
+
+      case 'locations': 
+      return <Locations />
 
       default:
         return <Placeholder title={activeTab} />

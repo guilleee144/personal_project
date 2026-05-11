@@ -4,7 +4,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from contextlib import asynccontextmanager
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from routers import npcs as npcs_router
 from routers import agent, builds, patches, bosses
+from routers import items as items_router
+
 
 load_dotenv()
 
@@ -34,6 +37,8 @@ app.include_router(agent.router)
 app.include_router(builds.router)
 app.include_router(patches.router)
 app.include_router(bosses.router)
+app.include_router(items_router.router)
+app.include_router(npcs_router.router)
 
 @app.get("/")
 def root():
