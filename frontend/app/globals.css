@@ -9,7 +9,7 @@
 :root {
   --gold: #C9A84C;
   --gold-bright: #F0C040;
-  --gold-dim: #7A6030;
+  --gold-dim: #9A7840;  /* era #7A6030 */
   --gold-glow: rgba(201, 168, 76, 0.18);
   --bg-void: #080808;
   --bg-deep: #0D0C0A;
@@ -18,8 +18,8 @@
   --bg-card: #201D19;
   --bg-hover: #252118;
   --text-rune: #E8D8A0;
-  --text-ash: #9A9080;
-  --text-dim: #5A5040;
+  --text-ash: #B0A080;  /* era #9A9080 */
+  --text-dim: #7A7060;  /* era #5A5040 */
   --border-gold: rgba(201, 168, 76, 0.3);
   --border-gold-bright: rgba(201, 168, 76, 0.6);
   --dlc-color: #A060E0;
@@ -72,3 +72,22 @@ html, body {
 
 .fade-up { animation: fadeUp 0.3s ease forwards; }
 .pulse { animation: pulse 2s infinite; }
+
+/* ── Legibilidad global — texto pequeño ── */
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Texto muy pequeño — más peso y contraste */
+.text-\[8px\], .text-\[9px\], .text-\[10px\], .text-\[11px\],
+.text-xs {
+  font-weight: 500 !important;
+  letter-spacing: 0.04em;
+  color: #B0A080 !important;
+}
+
+.text-stone-400 { color: #A89878 !important; }
+.text-stone-500 { color: #988868 !important; }
+.text-stone-600 { color: #887858 !important; }

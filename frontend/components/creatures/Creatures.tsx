@@ -5,8 +5,8 @@ import { useState, useEffect, useRef } from 'react'
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 
 const gold    = '#C9A84C'
-const goldDim = '#7A6030'
-const textAsh = '#9A9080'
+const goldDim = '#A07840'
+const textAsh = '#B8A888'
 
 interface Creature {
   id: number

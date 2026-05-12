@@ -1,9 +1,9 @@
 'use client'
 
 const gold    = '#C9A84C'
-const goldDim = '#7A6030'
-const textAsh = '#9A9080'
-const textDim = '#5A5040'
+const goldDim = '#A07840'
+const textAsh = '#B8A888'
+const textDim = '#8A7858'
 
 const NAV_ITEMS = [
   {

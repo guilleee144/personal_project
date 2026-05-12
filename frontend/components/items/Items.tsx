@@ -99,7 +99,7 @@ export default function Items() {
                     <img
                       src={categoryImages[category.id]}
                       alt={category.name}
-                      className="absolute inset-0 w-full h-full object-cover opacity-25 group-hover:opacity-40 transition-opacity duration-300"
+                      className="absolute inset-0 w-full h-full object-cover opacity-50 group-hover:opacity-70 transition-opacity duration-300"
                       onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-[#0f0e0a] via-[#0f0e0a]/60 to-transparent" />

@@ -1,7 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { X } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+
+const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+
+const gold    = '#C9A84C'
+const goldDim = '#A07840'
+const textAsh = '#B8A888'
+const textDim = '#8A7858'
 
 interface NPC {
   id: number
@@ -14,207 +20,320 @@ interface NPC {
 }
 
 export default function NPCs() {
-  const [npcs, setNpcs] = useState<NPC[]>([])
-  const [filteredNpcs, setFilteredNpcs] = useState<NPC[]>([])
-  const [loading, setLoading] = useState(true)
-  const [search, setSearch] = useState('')
-  const [selectedNpc, setSelectedNpc] = useState<NPC | null>(null)
+  const [npcs, setNpcs]           = useState<NPC[]>([])
+  const [filtered, setFiltered]   = useState<NPC[]>([])
+  const [loading, setLoading]     = useState(true)
+  const [search, setSearch]       = useState('')
+  const [filter, setFilter]       = useState<'all' | 'base' | 'dlc'>('all')
+  const [selected, setSelected]   = useState<NPC | null>(null)
+  const modalRef                  = useRef<HTMLDivElement>(null)
 
+  // Fetch
   useEffect(() => {
-    const fetchNpcs = async () => {
-      try {
-        const res = await fetch('http://localhost:8000/npcs')
-        const data = await res.json()
-        setNpcs(data.npcs || [])
-        setFilteredNpcs(data.npcs || [])
-      } catch (error) {
-        console.error('Error fetching NPCs:', error)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchNpcs()
+    fetch(`${API}/npcs`)
+      .then(r => r.json())
+      .then(d => {
+        setNpcs(d.npcs ?? [])
+        setFiltered(d.npcs ?? [])
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false))
   }, [])
 
+  // Filter + search
   useEffect(() => {
+    let list = npcs
+
+    if (filter === 'base') list = list.filter(n => !n.dlc)
+    if (filter === 'dlc')  list = list.filter(n => n.dlc)
+
     if (search.trim()) {
-      const searchLower = search.toLowerCase()
-      setFilteredNpcs(npcs.filter(npc => npc.name.toLowerCase().includes(searchLower)))
-    } else {
-      setFilteredNpcs(npcs)
+      const q = search.toLowerCase()
+      list = list.filter(n =>
+        n.name?.toLowerCase().includes(q) ||
+        n.role?.toLowerCase().includes(q) ||
+        n.location?.toLowerCase().includes(q) ||
+        n.description?.toLowerCase().includes(q)
+      )
     }
-  }, [search, npcs])
+
+    setFiltered(list)
+  }, [search, filter, npcs])
+
+  // Close modal on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
+        setSelected(null)
+      }
+    }
+    if (selected) document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [selected])
+
+  // Close modal on Escape
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') setSelected(null) }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [])
+
+  const FILTER_OPTS = [
+    { key: 'all',  label: 'All' },
+    { key: 'base', label: 'Base' },
+    { key: 'dlc',  label: 'DLC' },
+  ] as const
 
   return (
-    <section className="relative bg-[#070604] font-serif text-stone-200 w-full min-h-screen">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(198,161,91,0.08),transparent_50%)]" />
+    <div style={{
+      display: 'flex', flexDirection: 'column', height: '100%',
+      background: '#070604', color: '#D4C5A0', fontFamily: "'IBM Plex Sans', sans-serif",
+    }}>
 
-      <div className="relative z-10 w-full flex flex-col min-h-screen">
-        {/* Header - Fixed */}
-        <div className="px-8 py-8 border-b border-[#c6a15b]/10 shrink-0">
-          <h1 className="text-5xl font-bold uppercase tracking-[0.08em] text-[#e5c77e] mb-6">
-            NPCs & Merchants
-          </h1>
-          
-          {/* Search */}
-          <div className="flex items-center gap-4 flex-wrap">
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Search NPCs..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-80 bg-[#0f0e0a] border border-[#c6a15b]/20 rounded-lg px-4 py-2 text-sm text-stone-200 placeholder:text-stone-500 focus:border-[#c6a15b]/60 focus:outline-none transition-colors"
-              />
-              {search && (
-                <button
-                  onClick={() => setSearch('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-200"
-                >
-                  <X size={16} />
-                </button>
-              )}
-            </div>
-            <p className="text-stone-500 text-sm">
-              {filteredNpcs.length} {filteredNpcs.length === 1 ? 'NPC' : 'NPCs'} found
-            </p>
-          </div>
+      {/* ── STICKY HEADER ── */}
+      <div style={{
+        position: 'sticky', top: 0, zIndex: 10,
+        background: 'rgba(7,6,4,0.95)',
+        backdropFilter: 'blur(8px)',
+        borderBottom: '1px solid rgba(201,168,76,0.1)',
+        padding: '18px 28px 14px',
+        display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap',
+      }}>
+        {/* Title */}
+        <div style={{ flex: '0 0 auto' }}>
+          <h1 style={{
+            fontFamily: "'Cinzel', serif", fontSize: 18, fontWeight: 700,
+            letterSpacing: '0.12em', textTransform: 'uppercase',
+            color: gold, margin: 0, lineHeight: 1,
+          }}>NPCs & Merchants</h1>
+          <p style={{ fontSize: 10, color: goldDim, letterSpacing: '0.08em', marginTop: 4 }}>
+            {filtered.length} of {npcs.length} entries
+          </p>
         </div>
 
-        {/* Grid - Scrolleable */}
-        <div className="flex-1 overflow-y-auto px-8 py-8">
-          {loading ? (
-            <div className="flex justify-center py-20 text-[#c6a15b]">Loading NPCs...</div>
-          ) : filteredNpcs.length === 0 ? (
-            <div className="flex justify-center py-20 text-stone-500">No NPCs found</div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-max">
-              {filteredNpcs.map((npc) => (
-                <button
-                  key={npc.id}
-                  onClick={() => setSelectedNpc(npc)}
-                  className="group relative overflow-hidden rounded-lg border border-[#c6a15b]/20 bg-[#0f0e0a]/40 transition-all hover:border-[#c6a15b]/60 hover:bg-[#0f0e0a]/80 text-left"
-                >
-                  {/* Image */}
-                  {npc.image && (
-                    <div className="relative h-56 overflow-hidden bg-[#070604]">
-                      <img
-                        src={npc.image}
-                        alt={npc.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 opacity-85 group-hover:opacity-100"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-[#0f0e0a] via-transparent to-transparent" />
-                    </div>
-                  )}
+        {/* Separator */}
+        <div style={{ width: 1, height: 32, background: 'rgba(201,168,76,0.1)', flexShrink: 0 }} />
 
-                  {/* Content */}
-                  <div className="p-5">
-                    <div className="flex items-start justify-between gap-2 mb-2">
-                      <h3 className="text-sm font-bold uppercase tracking-[0.08em] text-[#e5c77e] group-hover:text-[#ffe09a] transition-colors line-clamp-2">
-                        {npc.name}
-                      </h3>
-                      {npc.dlc && (
-                        <span className="inline-block px-1.5 py-0.5 text-[7px] uppercase tracking-widest rounded bg-[#9d4edd]/25 border border-[#9d4edd]/50 text-[#c090ff] whitespace-nowrap font-bold shrink-0">
-                          ✦ DLC
-                        </span>
-                      )}
-                    </div>
+        {/* Search */}
+        <div style={{ position: 'relative', flex: '1 1 220px', maxWidth: 380 }}>
+          <span style={{
+            position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)',
+            fontSize: 12, color: goldDim, pointerEvents: 'none',
+          }}>⌕</span>
+          <input
+            type="text"
+            placeholder="Search by name, role, location..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            style={{
+              width: '100%', paddingLeft: 28, paddingRight: 12,
+              height: 34, fontSize: 12, color: '#D4C5A0',
+              background: 'rgba(201,168,76,0.04)',
+              border: '1px solid rgba(201,168,76,0.15)',
+              outline: 'none', fontFamily: "'IBM Plex Sans', sans-serif",
+            }}
+          />
+        </div>
 
-                    {npc.role && (
-                      <p className="text-xs text-stone-400 uppercase tracking-widest mb-2 line-clamp-1">
-                        {npc.role}
-                      </p>
-                    )}
-
-                    {npc.description && (
-                      <p className="text-xs text-stone-300 leading-relaxed line-clamp-3">
-                        {npc.description}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-[#c6a15b] to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                </button>
-              ))}
-            </div>
-          )}
+        {/* Filters */}
+        <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+          {FILTER_OPTS.map(opt => (
+            <button
+              key={opt.key}
+              onClick={() => setFilter(opt.key)}
+              style={{
+                padding: '5px 14px', fontSize: 11, fontFamily: "'Cinzel', serif",
+                letterSpacing: '0.06em', textTransform: 'uppercase',
+                cursor: 'pointer', border: 'none', transition: 'all 0.2s',
+                background: filter === opt.key
+                  ? 'rgba(201,168,76,0.15)'
+                  : 'rgba(201,168,76,0.04)',
+                color: filter === opt.key ? gold : goldDim,
+                borderBottom: filter === opt.key
+                  ? `1px solid ${gold}`
+                  : '1px solid rgba(201,168,76,0.1)',
+              }}
+            >
+              {opt.label === 'DLC' ? (
+                <span style={{ color: filter === opt.key ? '#9d4edd' : 'rgba(157,78,221,0.5)' }}>
+                  DLC
+                </span>
+              ) : opt.label}
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* Modal */}
-      {selectedNpc && (
-        <div
-          className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
-          onClick={() => setSelectedNpc(null)}
-        >
-          <div
-            className="bg-[#0f0e0a] border border-[#c6a15b]/30 rounded w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header */}
-            <div className="bg-[#070604] border-b border-[#c6a15b]/20 px-6 py-4 flex justify-between items-center shrink-0">
-              <div className="flex items-center gap-2 min-w-0">
-                <h2 className="text-2xl font-bold text-[#e5c77e] uppercase tracking-[0.08em] truncate">
-                  {selectedNpc.name}
-                </h2>
-                {selectedNpc.dlc && (
-                  <span className="inline-block px-2 py-0.5 text-[8px] uppercase tracking-widest rounded bg-[#9d4edd]/20 border border-[#9d4edd]/40 text-[#c090ff] whitespace-nowrap shrink-0">
-                    ✦ DLC
-                  </span>
-                )}
-              </div>
+      {/* ── CONTENT ── */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: '24px 28px' }}>
+
+        {loading && (
+          <div style={{ textAlign: 'center', paddingTop: 80 }}>
+            <p style={{ fontFamily: "'Cinzel', serif", fontSize: 12, color: goldDim, letterSpacing: '0.1em' }}>
+              Loading NPCs...
+            </p>
+          </div>
+        )}
+
+        {!loading && filtered.length === 0 && (
+          <div style={{ textAlign: 'center', paddingTop: 80 }}>
+            <p style={{ fontFamily: "'Cinzel', serif", fontSize: 13, color: goldDim, letterSpacing: '0.1em' }}>
+              No NPCs found
+            </p>
+          </div>
+        )}
+
+        {!loading && (
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
+            gap: 16,
+          }}>
+            {filtered.map(npc => (
+              <NPCCard
+                key={npc.id}
+                npc={npc}
+                onClick={() => setSelected(npc)}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* ── MODAL ── */}
+      {selected && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 50,
+          background: 'rgba(4,3,2,0.88)',
+          backdropFilter: 'blur(6px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: 24,
+        }}>
+          <div ref={modalRef} style={{
+            width: '100%', maxWidth: 680,
+            background: '#0c0a08',
+            border: '1px solid rgba(201,168,76,0.2)',
+            boxShadow: '0 0 60px rgba(201,168,76,0.06)',
+            display: 'flex', flexDirection: 'column',
+            maxHeight: '90vh', overflowY: 'auto',
+          }}>
+
+            {/* Modal header bar */}
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              padding: '14px 20px',
+              borderBottom: '1px solid rgba(201,168,76,0.1)',
+            }}>
+              <span style={{ fontFamily: "'Cinzel', serif", fontSize: 8, letterSpacing: 3, color: goldDim, textTransform: 'uppercase' }}>
+                NPC Detail
+              </span>
               <button
-                onClick={() => setSelectedNpc(null)}
-                className="text-stone-500 hover:text-[#c6a15b] text-2xl leading-none ml-4 shrink-0"
-              >
-                ✕
-              </button>
+                onClick={() => setSelected(null)}
+                style={{
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  color: goldDim, fontSize: 16, lineHeight: 1, padding: 4,
+                  transition: 'color 0.2s',
+                }}
+                onMouseEnter={e => (e.currentTarget.style.color = gold)}
+                onMouseLeave={e => (e.currentTarget.style.color = goldDim)}
+              >✕</button>
             </div>
 
-            {/* Content - Scrolleable */}
-            <div className="overflow-y-auto flex-1 px-6 py-6">
-              {/* Image */}
-              {selectedNpc.image && (
-                <div className="mb-6 bg-[#070604] rounded-lg border border-[#c6a15b]/20 p-4 flex items-center justify-center h-64">
-                  <img
-                    src={selectedNpc.image}
-                    alt={selectedNpc.name}
-                    className="max-h-60 max-w-full object-contain"
-                  />
+            {/* Modal body */}
+            <div style={{ display: 'flex', gap: 0 }}>
+
+              {/* Image panel */}
+              <div style={{
+                width: 220, flexShrink: 0,
+                borderRight: '1px solid rgba(201,168,76,0.1)',
+                display: 'flex', flexDirection: 'column', alignItems: 'center',
+                padding: '28px 20px',
+                background: 'rgba(201,168,76,0.02)',
+              }}>
+                <div style={{
+                  width: 160, height: 160, overflow: 'hidden',
+                  border: '1px solid rgba(201,168,76,0.15)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  background: 'rgba(201,168,76,0.03)',
+                }}>
+                  {selected.image ? (
+                    <img
+                      src={selected.image}
+                      alt={selected.name}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
+                    />
+                  ) : (
+                    <span style={{ fontSize: 32, color: goldDim }}>◎</span>
+                  )}
                 </div>
-              )}
 
-              {/* Info */}
-              <div className="space-y-4">
-                {selectedNpc.role && (
-                  <div className="border-b border-[#c6a15b]/10 pb-3">
-                    <div className="text-xs uppercase tracking-widest text-stone-500 mb-1 font-bold">Role</div>
-                    <div className="text-stone-200 text-sm">{selectedNpc.role}</div>
+                {selected.role && (
+                  <div style={{ marginTop: 16, textAlign: 'center' }}>
+                    <p style={{
+                      fontFamily: "'Cinzel', serif", fontSize: 8, letterSpacing: 2,
+                      color: goldDim, textTransform: 'uppercase', marginBottom: 4,
+                    }}>Role</p>
+                    <p style={{
+                      fontSize: 11, color: '#C9B896', textAlign: 'center',
+                      lineHeight: 1.4, fontStyle: 'italic',
+                    }}>{selected.role}</p>
                   </div>
                 )}
 
-                {selectedNpc.location && (
-                  <div className="border-b border-[#c6a15b]/10 pb-3">
-                    <div className="text-xs uppercase tracking-widest text-stone-500 mb-1 font-bold">Location</div>
-                    <div className="text-stone-200 text-sm">{selectedNpc.location}</div>
-                  </div>
+                {selected.dlc && (
+                  <span style={{
+                    marginTop: 14, fontSize: 9, letterSpacing: 2,
+                    fontFamily: "'Cinzel', serif", textTransform: 'uppercase',
+                    color: '#9d4edd', border: '1px solid rgba(157,78,221,0.3)',
+                    padding: '2px 10px',
+                  }}>Shadow of the Erdtree</span>
+                )}
+              </div>
+
+              {/* Info panel */}
+              <div style={{ flex: 1, padding: '28px 24px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+                {/* Name */}
+                <h2 style={{
+                  fontFamily: "'Cinzel', serif", fontSize: 20, fontWeight: 700,
+                  color: '#E8D8A0', letterSpacing: '0.08em', margin: 0,
+                }}>{selected.name}</h2>
+
+                {/* Location */}
+                {selected.location && (
+                  <ModalField label="Location" value={selected.location} icon="◇" />
                 )}
 
-                {selectedNpc.description && (
-                  <div className="pb-3">
-                    <div className="text-xs uppercase tracking-widest text-stone-500 mb-1 font-bold">Description</div>
-                    <div className="text-stone-200 text-sm leading-relaxed">{selectedNpc.description}</div>
-                  </div>
+                {/* Description */}
+                {selected.description && (
+                  <ModalField label="Description" value={selected.description} icon="◎" />
                 )}
 
-                {/* More Info Button */}
-                <div className="pt-4 border-t border-[#c6a15b]/10">
+                {/* Fextralife link */}
+                <div style={{ marginTop: 'auto', paddingTop: 8 }}>
                   <a
-                    href={`https://eldenring.wiki.fextralife.com/${selectedNpc.name.replace(/\s+/g, '+')}`}
+                    href={`https://eldenring.wiki.fextralife.com/${selected.name.replace(/\s+/g, '+')}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="block text-center bg-[#c6a15b]/20 border border-[#c6a15b]/60 hover:bg-[#c6a15b]/30 text-[#c6a15b] px-4 py-2 rounded-lg text-sm uppercase tracking-widest font-medium transition-all"
+                    style={{
+                      display: 'block', textAlign: 'center',
+                      padding: '9px 16px', fontSize: 11,
+                      fontFamily: "'Cinzel', serif", letterSpacing: '0.08em',
+                      textTransform: 'uppercase', textDecoration: 'none',
+                      color: gold,
+                      border: '1px solid rgba(201,168,76,0.25)',
+                      background: 'rgba(201,168,76,0.04)',
+                      transition: 'all 0.2s',
+                    }}
+                    onMouseEnter={e => {
+                      (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(201,168,76,0.1)'
+                      ;(e.currentTarget as HTMLAnchorElement).style.borderColor = 'rgba(201,168,76,0.5)'
+                    }}
+                    onMouseLeave={e => {
+                      (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(201,168,76,0.04)'
+                      ;(e.currentTarget as HTMLAnchorElement).style.borderColor = 'rgba(201,168,76,0.25)'
+                    }}
                   >
                     More Info on Fextralife →
                   </a>
@@ -224,6 +343,115 @@ export default function NPCs() {
           </div>
         </div>
       )}
-    </section>
+    </div>
+  )
+}
+
+/* ── Sub-components ── */
+
+function NPCCard({ npc, onClick }: { npc: NPC; onClick: () => void }) {
+  const [hovered, setHovered] = useState(false)
+
+  return (
+    <div
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        cursor: 'pointer',
+        background: hovered ? 'rgba(201,168,76,0.06)' : 'rgba(201,168,76,0.02)',
+        border: `1px solid ${hovered ? 'rgba(201,168,76,0.3)' : 'rgba(201,168,76,0.1)'}`,
+        transition: 'all 0.2s',
+        display: 'flex', flexDirection: 'column',
+        overflow: 'hidden',
+      }}
+    >
+      {/* Image */}
+      <div style={{
+        width: '100%', aspectRatio: '1 / 1',
+        background: 'rgba(201,168,76,0.03)',
+        overflow: 'hidden', position: 'relative',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+      }}>
+        {npc.image ? (
+          <img
+            src={npc.image}
+            alt={npc.name}
+            style={{
+              width: '100%', height: '100%', objectFit: 'cover',
+              transition: 'transform 0.35s',
+              transform: hovered ? 'scale(1.06)' : 'scale(1)',
+              filter: hovered ? 'brightness(1.08)' : 'brightness(0.92)',
+            }}
+            onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
+          />
+        ) : (
+          <span style={{ fontSize: 36, color: 'rgba(201,168,76,0.2)' }}>◎</span>
+        )}
+
+        {npc.dlc && (
+          <span style={{
+            position: 'absolute', top: 8, right: 8,
+            fontSize: 8, letterSpacing: 1.5,
+            fontFamily: "'Cinzel', serif", textTransform: 'uppercase',
+            color: '#9d4edd', background: 'rgba(4,3,2,0.85)',
+            border: '1px solid rgba(157,78,221,0.35)',
+            padding: '2px 6px',
+          }}>DLC</span>
+        )}
+      </div>
+
+      {/* Info */}
+      <div style={{ padding: '12px 14px', borderTop: '1px solid rgba(201,168,76,0.08)' }}>
+        <p style={{
+          fontFamily: "'Cinzel', serif", fontSize: 12, fontWeight: 600,
+          color: hovered ? '#E8D8A0' : '#C9B896',
+          letterSpacing: '0.05em', margin: '0 0 6px',
+          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+          transition: 'color 0.2s',
+        }}>{npc.name}</p>
+
+        {npc.role && (
+          <p style={{
+            fontSize: 10, color: 'rgba(154,144,128,0.6)',
+            margin: '0 0 4px', whiteSpace: 'nowrap',
+            overflow: 'hidden', textOverflow: 'ellipsis',
+            fontStyle: 'italic',
+          }}>
+            <span style={{ color: goldDim, marginRight: 4 }}>◎</span>
+            {npc.role}
+          </p>
+        )}
+
+        {npc.location && (
+          <p style={{
+            fontSize: 10, color: 'rgba(154,144,128,0.5)',
+            margin: 0, whiteSpace: 'nowrap',
+            overflow: 'hidden', textOverflow: 'ellipsis',
+          }}>
+            <span style={{ color: goldDim, marginRight: 4 }}>◇</span>
+            {npc.location}
+          </p>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function ModalField({ label, value, icon }: { label: string; value: string; icon: string }) {
+  return (
+    <div>
+      <p style={{
+        fontFamily: "'Cinzel', serif", fontSize: 8, letterSpacing: 2.5,
+        textTransform: 'uppercase', color: goldDim, marginBottom: 8,
+      }}>
+        <span style={{ marginRight: 6 }}>{icon}</span>{label}
+      </p>
+      <p style={{
+        fontSize: 12, lineHeight: 1.7, color: '#9A9080', margin: 0,
+      }}>
+        {value}
+      </p>
+    </div>
   )
 }

@@ -4,6 +4,7 @@ from typing import Optional
 class AgentQuery(BaseModel):
     message: str
     context: Optional[str] = None
+    history: Optional[list[dict]] = []
 
 class BuildFilter(BaseModel):
     strength: Optional[int] = 0

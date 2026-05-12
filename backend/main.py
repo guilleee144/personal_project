@@ -7,11 +7,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from routers import npcs as npcs_router
 from routers import agent, builds, patches, bosses
 from routers import items as items_router
-<<<<<<< HEAD
 from routers import creatures as creatures_router 
-=======
-from routers import creatures as creatures_router
->>>>>>> c45d450 (creatures component and router)
 
 
 load_dotenv()
@@ -45,10 +41,6 @@ app.include_router(bosses.router)
 app.include_router(items_router.router)
 app.include_router(npcs_router.router)
 app.include_router(creatures_router.router)
-<<<<<<< HEAD
-=======
-
->>>>>>> c45d450 (creatures component and router)
 
 @app.get("/")
 def root():
