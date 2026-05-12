@@ -41,6 +41,9 @@ export default function Dashboard() {
       case 'creatures': 
       return <Creatures />
 
+      case 'creatures': 
+      return <Creatures />
+
       default:
         return <Placeholder title={activeTab} />
     }
