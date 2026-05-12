@@ -10,6 +10,7 @@ import Bosses from '@/components/bosses/Bosses'
 import Items from '@/components/items/Items'
 import NPCs from '@/components/npcs/Npcs'
 import Locations from '@/components/locations/Locations'
+import Creatures from '@/components/creatures/Creatures'
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState('agent')
@@ -36,6 +37,9 @@ export default function Dashboard() {
 
       case 'locations': 
       return <Locations />
+      
+      case 'creatures': 
+      return <Creatures />
 
       default:
         return <Placeholder title={activeTab} />

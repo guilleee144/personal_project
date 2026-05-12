@@ -1,0 +1,419 @@
+'use client'
+
+import { useState, useEffect, useRef } from 'react'
+
+const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+
+const gold    = '#C9A84C'
+const goldDim = '#7A6030'
+const textAsh = '#9A9080'
+
+interface Creature {
+  id: number
+  name: string
+  image: string
+  locations: string
+  drops: string
+  blockquote: string
+  dlc: boolean
+}
+
+export default function Creatures() {
+  const [creatures, setCreatures]   = useState<Creature[]>([])
+  const [filtered, setFiltered]     = useState<Creature[]>([])
+  const [loading, setLoading]       = useState(true)
+  const [search, setSearch]         = useState('')
+  const [filter, setFilter]         = useState<'all' | 'base' | 'dlc'>('all')
+  const [selected, setSelected]     = useState<Creature | null>(null)
+  const modalRef                    = useRef<HTMLDivElement>(null)
+
+  // Fetch
+  useEffect(() => {
+    fetch(`${API}/creatures/`)
+      .then(r => r.json())
+      .then(d => {
+        setCreatures(d.data ?? [])
+        setFiltered(d.data ?? [])
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false))
+  }, [])
+
+  // Filter + search
+  useEffect(() => {
+    let list = creatures
+
+    if (filter === 'base') list = list.filter(c => !c.dlc)
+    if (filter === 'dlc')  list = list.filter(c => c.dlc)
+
+    if (search.trim()) {
+      const q = search.toLowerCase()
+      list = list.filter(c =>
+        c.name?.toLowerCase().includes(q) ||
+        (Array.isArray(c.locations)
+  ? c.locations.join(' ')
+  : String(c.locations ?? '')).toLowerCase().includes(q) ||
+        (Array.isArray(c.drops)
+  ? c.drops.join(' ')
+  : String(c.drops ?? '')).toLowerCase().includes(q)
+      )
+    }
+
+    setFiltered(list)
+  }, [search, filter, creatures])
+
+  // Close modal on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
+        setSelected(null)
+      }
+    }
+    if (selected) document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [selected])
+
+  // Close modal on Escape
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') setSelected(null) }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [])
+
+  const FILTER_OPTS = [
+    { key: 'all',  label: 'All' },
+    { key: 'base', label: 'Base' },
+    { key: 'dlc',  label: 'DLC' },
+  ] as const
+
+  return (
+    <div style={{
+      display: 'flex', flexDirection: 'column', height: '100%',
+      background: '#070604', color: '#D4C5A0', fontFamily: "'IBM Plex Sans', sans-serif",
+    }}>
+
+      {/* ── STICKY HEADER ── */}
+      <div style={{
+        position: 'sticky', top: 0, zIndex: 10,
+        background: 'rgba(7,6,4,0.95)',
+        backdropFilter: 'blur(8px)',
+        borderBottom: '1px solid rgba(201,168,76,0.1)',
+        padding: '18px 28px 14px',
+        display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap',
+      }}>
+        {/* Title */}
+        <div style={{ flex: '0 0 auto' }}>
+          <h1 style={{
+            fontFamily: "'Cinzel', serif", fontSize: 18, fontWeight: 700,
+            letterSpacing: '0.12em', textTransform: 'uppercase',
+            color: gold, margin: 0, lineHeight: 1,
+          }}>Creatures</h1>
+          <p style={{ fontSize: 10, color: goldDim, letterSpacing: '0.08em', marginTop: 4 }}>
+            {filtered.length} of {creatures.length} entries
+          </p>
+        </div>
+
+        {/* Separator */}
+        <div style={{ width: 1, height: 32, background: 'rgba(201,168,76,0.1)', flexShrink: 0 }} />
+
+        {/* Search */}
+        <div style={{ position: 'relative', flex: '1 1 220px', maxWidth: 380 }}>
+          <span style={{
+            position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)',
+            fontSize: 12, color: goldDim, pointerEvents: 'none',
+          }}>⌕</span>
+          <input
+            type="text"
+            placeholder="Search by name, location, drop..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            style={{
+              width: '100%', paddingLeft: 28, paddingRight: 12,
+              height: 34, fontSize: 12, color: '#D4C5A0',
+              background: 'rgba(201,168,76,0.04)',
+              border: '1px solid rgba(201,168,76,0.15)',
+              outline: 'none', fontFamily: "'IBM Plex Sans', sans-serif",
+            }}
+          />
+        </div>
+
+        {/* Filters */}
+        <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+          {FILTER_OPTS.map(opt => (
+            <button
+              key={opt.key}
+              onClick={() => setFilter(opt.key)}
+              style={{
+                padding: '5px 14px', fontSize: 11, fontFamily: "'Cinzel', serif",
+                letterSpacing: '0.06em', textTransform: 'uppercase',
+                cursor: 'pointer', border: 'none', transition: 'all 0.2s',
+                background: filter === opt.key
+                  ? 'rgba(201,168,76,0.15)'
+                  : 'rgba(201,168,76,0.04)',
+                color: filter === opt.key ? gold : goldDim,
+                borderBottom: filter === opt.key
+                  ? `1px solid ${gold}`
+                  : '1px solid rgba(201,168,76,0.1)',
+              }}
+            >
+              {opt.label === 'DLC' ? (
+                <span style={{ color: filter === opt.key ? '#9d4edd' : 'rgba(157,78,221,0.5)' }}>
+                  DLC
+                </span>
+              ) : opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* ── CONTENT ── */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: '24px 28px' }}>
+
+        {loading && (
+          <div style={{ textAlign: 'center', paddingTop: 80 }}>
+            <p style={{ fontFamily: "'Cinzel', serif", fontSize: 12, color: goldDim, letterSpacing: '0.1em' }}>
+              Loading creatures...
+            </p>
+          </div>
+        )}
+
+        {!loading && filtered.length === 0 && (
+          <div style={{ textAlign: 'center', paddingTop: 80 }}>
+            <p style={{ fontFamily: "'Cinzel', serif", fontSize: 13, color: goldDim, letterSpacing: '0.1em' }}>
+              No creatures found
+            </p>
+          </div>
+        )}
+
+        {!loading && (
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+            gap: 16,
+          }}>
+            {filtered.map(creature => (
+              <CreatureCard
+                key={creature.id}
+                creature={creature}
+                onClick={() => setSelected(creature)}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* ── MODAL ── */}
+      {selected && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 50,
+          background: 'rgba(4,3,2,0.88)',
+          backdropFilter: 'blur(6px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: 24,
+        }}>
+          <div ref={modalRef} style={{
+            width: '100%', maxWidth: 680,
+            background: '#0c0a08',
+            border: '1px solid rgba(201,168,76,0.2)',
+            boxShadow: '0 0 60px rgba(201,168,76,0.06)',
+            display: 'flex', flexDirection: 'column',
+            maxHeight: '90vh', overflowY: 'auto',
+          }}>
+
+            {/* Modal header bar */}
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              padding: '14px 20px',
+              borderBottom: '1px solid rgba(201,168,76,0.1)',
+            }}>
+              <span style={{ fontFamily: "'Cinzel', serif", fontSize: 8, letterSpacing: 3, color: goldDim, textTransform: 'uppercase' }}>
+                Creature Detail
+              </span>
+              <button
+                onClick={() => setSelected(null)}
+                style={{
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  color: goldDim, fontSize: 16, lineHeight: 1, padding: 4,
+                  transition: 'color 0.2s',
+                }}
+                onMouseEnter={e => (e.currentTarget.style.color = gold)}
+                onMouseLeave={e => (e.currentTarget.style.color = goldDim)}
+              >✕</button>
+            </div>
+
+            {/* Modal body */}
+            <div style={{ display: 'flex', gap: 0 }}>
+
+              {/* Image panel */}
+              <div style={{
+                width: 220, flexShrink: 0,
+                borderRight: '1px solid rgba(201,168,76,0.1)',
+                display: 'flex', flexDirection: 'column', alignItems: 'center',
+                padding: '28px 20px',
+                background: 'rgba(201,168,76,0.02)',
+              }}>
+                <div style={{
+                  width: 160, height: 160, overflow: 'hidden',
+                  border: '1px solid rgba(201,168,76,0.15)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  background: 'rgba(201,168,76,0.03)',
+                }}>
+                  {selected.image ? (
+                    <img
+                      src={selected.image}
+                      alt={selected.name}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
+                    />
+                  ) : (
+                    <span style={{ fontSize: 32, color: goldDim }}>🝗</span>
+                  )}
+                </div>
+
+                {selected.dlc && (
+                  <span style={{
+                    marginTop: 14, fontSize: 9, letterSpacing: 2,
+                    fontFamily: "'Cinzel', serif", textTransform: 'uppercase',
+                    color: '#9d4edd', border: '1px solid rgba(157,78,221,0.3)',
+                    padding: '2px 10px',
+                  }}>Shadow of the Erdtree</span>
+                )}
+              </div>
+
+              {/* Info panel */}
+              <div style={{ flex: 1, padding: '28px 24px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+                {/* Name + blockquote */}
+                <div>
+                  <h2 style={{
+                    fontFamily: "'Cinzel', serif", fontSize: 20, fontWeight: 700,
+                    color: '#E8D8A0', letterSpacing: '0.08em', margin: '0 0 10px',
+                  }}>{selected.name}</h2>
+
+                  {selected.blockquote && (
+                    <p style={{
+                      fontSize: 11.5, fontStyle: 'italic', lineHeight: 1.65,
+                      color: 'rgba(154,144,128,0.75)',
+                      borderLeft: `2px solid rgba(201,168,76,0.25)`,
+                      paddingLeft: 12, margin: 0,
+                    }}>
+                      "{selected.blockquote}"
+                    </p>
+                  )}
+                </div>
+
+                {/* Locations */}
+                {selected.locations && (
+                  <ModalField label="Found In" value={selected.locations} icon="◇" />
+                )}
+
+                {/* Drops */}
+                {selected.drops && (
+                  <ModalField label="Notable Drops" value={selected.drops} icon="◆" />
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+/* ── Sub-components ── */
+
+function CreatureCard({ creature, onClick }: { creature: Creature; onClick: () => void }) {
+  const [hovered, setHovered] = useState(false)
+
+  return (
+    <div
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        cursor: 'pointer',
+        background: hovered ? 'rgba(201,168,76,0.06)' : 'rgba(201,168,76,0.02)',
+        border: `1px solid ${hovered ? 'rgba(201,168,76,0.3)' : 'rgba(201,168,76,0.1)'}`,
+        transition: 'all 0.2s',
+        display: 'flex', flexDirection: 'column',
+        overflow: 'hidden',
+      }}
+    >
+      {/* Image */}
+      <div style={{
+        width: '100%', aspectRatio: '1 / 1',
+        background: 'rgba(201,168,76,0.03)',
+        overflow: 'hidden', position: 'relative',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+      }}>
+        {creature.image ? (
+          <img
+            src={creature.image}
+            alt={creature.name}
+            style={{
+              width: '100%', height: '100%', objectFit: 'cover',
+              transition: 'transform 0.35s',
+              transform: hovered ? 'scale(1.06)' : 'scale(1)',
+              filter: hovered ? 'brightness(1.08)' : 'brightness(0.92)',
+            }}
+            onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
+          />
+        ) : (
+          <span style={{ fontSize: 36, color: 'rgba(201,168,76,0.2)' }}>🝗</span>
+        )}
+
+        {creature.dlc && (
+          <span style={{
+            position: 'absolute', top: 8, right: 8,
+            fontSize: 8, letterSpacing: 1.5,
+            fontFamily: "'Cinzel', serif", textTransform: 'uppercase',
+            color: '#9d4edd', background: 'rgba(4,3,2,0.85)',
+            border: '1px solid rgba(157,78,221,0.35)',
+            padding: '2px 6px',
+          }}>DLC</span>
+        )}
+      </div>
+
+      {/* Info */}
+      <div style={{ padding: '12px 14px', borderTop: '1px solid rgba(201,168,76,0.08)' }}>
+        <p style={{
+          fontFamily: "'Cinzel', serif", fontSize: 12, fontWeight: 600,
+          color: hovered ? '#E8D8A0' : '#C9B896',
+          letterSpacing: '0.05em', margin: '0 0 6px',
+          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+          transition: 'color 0.2s',
+        }}>{creature.name}</p>
+
+        {creature.locations && (
+          <p style={{
+            fontSize: 10, color: 'rgba(154,144,128,0.6)',
+            margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+          }}>
+            <span style={{ color: goldDim, marginRight: 4 }}>◇</span>
+            {Array.isArray(creature.locations)
+                ? creature.locations[0]
+                : String(creature.locations ?? '').split(',')[0].trim()}
+          </p>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function ModalField({ label, value, icon }: { label: string; value: string; icon: string }) {
+  return (
+    <div>
+      <p style={{
+        fontFamily: "'Cinzel', serif", fontSize: 8, letterSpacing: 2.5,
+        textTransform: 'uppercase', color: goldDim, marginBottom: 8,
+      }}>
+        <span style={{ marginRight: 6 }}>{icon}</span>{label}
+      </p>
+      <p style={{
+        fontSize: 12, lineHeight: 1.7, color: '#9A9080', margin: 0,
+      }}>
+        {value}
+      </p>
+    </div>
+  )
+}

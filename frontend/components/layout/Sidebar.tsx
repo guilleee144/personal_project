@@ -16,14 +16,15 @@ const NAV_ITEMS = [
   {
     section: 'World',
     items: [
-      { id: 'patches', icon: '◉', label: 'Patch Notes', count: null, live: true },
-      { id: 'bosses',  icon: '☠', label: 'Bosses',      count: null, live: true },
-      { id: 'items', icon: '◆', label: 'Items',         count: null, live: true },
+      { id: 'patches',   icon: '◉', label: 'Patch Notes', count: null, live: true },
+      { id: 'items',     icon: '◆', label: 'Items',       count: null, live: true },
+      { id: 'creatures', icon: '🝗', label: 'Creatures',   count: null, live: true },
     ],
   },
   {
     section: 'Lore',
     items: [
+      { id: 'bosses',    icon: '☠', label: 'Bosses',     count: null, live: true },
       { id: 'npcs',      icon: '◎', label: 'NPCs',       count: null, live: true },
       { id: 'locations', icon: '◇', label: 'Locations',  count: null, live: true },
     ],
@@ -60,7 +61,6 @@ export default function Sidebar({ active, onNavigate }: SidebarProps) {
 
       {NAV_ITEMS.map((group, gi) => (
         <div key={group.section} style={{ marginBottom: 4 }}>
-          {/* Section label */}
           <p style={{
             fontFamily: "'Cinzel',serif", fontSize: 8, letterSpacing: 2.5,
             textTransform: 'uppercase', color: 'rgba(90,80,64,0.8)',
@@ -96,7 +96,6 @@ export default function Sidebar({ active, onNavigate }: SidebarProps) {
                   if (!isActive) e.currentTarget.style.background = 'transparent'
                 }}
               >
-                {/* Icon */}
                 <span style={{
                   width: 18, textAlign: 'center', fontSize: 13, flexShrink: 0,
                   color: isActive ? gold : 'rgba(90,80,64,0.9)',
@@ -104,7 +103,6 @@ export default function Sidebar({ active, onNavigate }: SidebarProps) {
                   transition: 'all 0.2s',
                 }}>{item.icon}</span>
 
-                {/* Label */}
                 <span style={{
                   fontFamily: "'IBM Plex Sans',sans-serif",
                   fontSize: 12.5,
@@ -114,7 +112,6 @@ export default function Sidebar({ active, onNavigate }: SidebarProps) {
                   flex: 1,
                 }}>{item.label}</span>
 
-                {/* Live badge */}
                 {item.live && !isActive && (
                   <span style={{
                     width: 4, height: 4, borderRadius: '50%',
@@ -123,7 +120,6 @@ export default function Sidebar({ active, onNavigate }: SidebarProps) {
                   }} />
                 )}
 
-                {/* Count badge */}
                 {item.count && (
                   <span style={{
                     fontFamily: "'Cinzel',serif",
@@ -134,7 +130,6 @@ export default function Sidebar({ active, onNavigate }: SidebarProps) {
                   }}>{item.count}</span>
                 )}
 
-                {/* Soon badge */}
                 {!item.live && (
                   <span style={{
                     fontFamily: "'Cinzel',serif",
